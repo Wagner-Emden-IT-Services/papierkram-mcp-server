@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.env
+*.tsbuildinfo
+.mcp.json
+.claude/skills/
+DEPLOYMENT.local.md

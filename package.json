@@ -1,0 +1,42 @@
+{
+  "name": "papierkram-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP Server for the Papierkram.de accounting API",
+  "author": "Wagner-Emden IT Services",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "npx tsx src/index.ts",
+    "dev:http": "npx tsx src/server/http-server.ts",
+    "start": "node dist/index.js",
+    "start:http": "node dist/server/http-server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Wagner-Emden-IT-Services/papierkram-mcp-server.git"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "papierkram",
+    "accounting",
+    "buchhaltung"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "overrides": {
+    "@modelcontextprotocol/sdk": "1.21.2"
+  },
+  "dependencies": {
+    "fastmcp": "^1.21.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "tsx": "^4.19.0",
+    "@types/node": "^22.0.0"
+  }
+}
