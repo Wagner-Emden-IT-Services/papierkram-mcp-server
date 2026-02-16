@@ -11,7 +11,12 @@
     "dev": "npx tsx src/index.ts",
     "dev:http": "npx tsx src/server/http-server.ts",
     "start": "node dist/index.js",
-    "start:http": "node dist/server/http-server.js"
+    "start:http": "node dist/server/http-server.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration"
   },
   "repository": {
     "type": "git",
@@ -35,8 +40,10 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0",
+    "@vitest/coverage-v8": "^4.0.18",
     "tsx": "^4.19.0",
-    "@types/node": "^22.0.0"
+    "typescript": "^5.7.0",
+    "vitest": "^4.0.18"
   }
 }
