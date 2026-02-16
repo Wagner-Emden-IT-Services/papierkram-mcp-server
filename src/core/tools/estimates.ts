@@ -154,6 +154,27 @@ export function registerEstimateTools(server: FastMCP) {
   });
 
   server.addTool({
+    name: "send_estimate",
+    description: "Send/deliver an estimate via email in Papierkram.",
+    parameters: z.object({
+      id: z.number().describe("Estimate ID to send"),
+      email: z.string().optional().describe("Recipient email address (uses customer default if omitted)"),
+    }),
+    execute: async (params) => {
+      const { id, email } = params;
+      const body: Record<string, unknown> = {
+        send_via: "email",
+      };
+      if (email) {
+        body.email = { address: email };
+      }
+      const client = getClient();
+      const result = await client.post(`/income/estimates/${id}/deliver`, body);
+      return JSON.stringify(result, null, 2);
+    },
+  });
+
+  server.addTool({
     name: "download_estimate_pdf",
     description: "Download an estimate as PDF from Papierkram. Returns base64-encoded PDF data.",
     parameters: z.object({
