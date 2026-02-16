@@ -1,24 +1,28 @@
 import { FastMCP } from "fastmcp";
 import { z } from "zod";
 import { getClient } from "../../api/client.js";
+import { compactList, compactCompany, compactContactPerson } from "../../api/transformers.js";
 
 export function registerContactTools(server: FastMCP) {
   // ---- Companies ----
 
   server.addTool({
     name: "list_companies",
-    description: "List all companies/contacts in Papierkram. Supports pagination and filtering by type.",
+    description: "List companies/contacts in Papierkram. Returns compact summaries by default (set compact=false for full details). Supports pagination and filtering by type.",
     parameters: z.object({
       page: z.number().optional().describe("Page number (default: 1)"),
-      page_size: z.number().optional().describe("Items per page (default: 100)"),
+      page_size: z.number().optional().default(25).describe("Items per page (default: 25)"),
       order_by: z.string().optional().describe("Field to order by (e.g. 'name')"),
       order_direction: z.enum(["asc", "desc"]).optional().describe("Order direction"),
-      contact_type: z.enum(["customer", "supplier"]).optional().describe("Filter by contact type"),
+      contact_type: z.enum(["customer", "supplier"]).optional().describe("Filter by contact type (note: may be ignored by API)"),
+      compact: z.boolean().optional().default(true).describe("Return compact summaries (default: true). Set false for full API response."),
     }),
     execute: async (params) => {
+      const { compact, ...query } = params;
       const client = getClient();
-      const result = await client.list("/contact/companies", params as Record<string, string | number | boolean>);
-      return JSON.stringify(result, null, 2);
+      const result = await client.list("/contact/companies", query as Record<string, string | number | boolean>);
+      if (compact === false) return JSON.stringify(result, null, 2);
+      return JSON.stringify(compactList(result as Record<string, unknown>, compactCompany), null, 2);
     },
   });
 
@@ -110,20 +114,22 @@ export function registerContactTools(server: FastMCP) {
 
   server.addTool({
     name: "list_contact_persons",
-    description: "List all contact persons of a specific company in Papierkram.",
+    description: "List contact persons of a specific company in Papierkram. Returns compact summaries by default.",
     parameters: z.object({
       company_id: z.number().describe("Company ID"),
       page: z.number().optional().describe("Page number"),
-      page_size: z.number().optional().describe("Items per page"),
+      page_size: z.number().optional().default(25).describe("Items per page (default: 25)"),
+      compact: z.boolean().optional().default(true).describe("Return compact summaries (default: true). Set false for full API response."),
     }),
     execute: async (params) => {
-      const { company_id, ...query } = params;
+      const { company_id, compact, ...query } = params;
       const client = getClient();
       const result = await client.list(
         `/contact/companies/${company_id}/persons`,
         query as Record<string, string | number | boolean>
       );
-      return JSON.stringify(result, null, 2);
+      if (compact === false) return JSON.stringify(result, null, 2);
+      return JSON.stringify(compactList(result as Record<string, unknown>, compactContactPerson), null, 2);
     },
   });
 

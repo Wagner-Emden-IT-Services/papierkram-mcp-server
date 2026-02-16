@@ -36,6 +36,13 @@ src/
     └── index.ts                # Environment variable configuration
 ```
 
+## API Reference
+
+- **Official API docs**: https://demo.papierkram.de/api (ONLY use this as reference, no other sources!)
+- **Swagger spec**: https://demo.papierkram.de/api/v1/api-docs/api/v1/swagger.json
+- **Demo API for testing**: https://demo.papierkram.de/api/v1 (use for read-only API tests without needing credentials)
+- Base URL: `https://{subdomain}.papierkram.de/api/v1`
+
 ## Conventions
 
 - **Tool naming**: `verb_noun` (e.g. `list_invoices`, `get_company`, `create_project`)

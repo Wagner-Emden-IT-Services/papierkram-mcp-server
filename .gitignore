@@ -5,3 +5,4 @@ dist/
 .mcp.json
 .claude/skills/
 DEPLOYMENT.local.md
+.history/

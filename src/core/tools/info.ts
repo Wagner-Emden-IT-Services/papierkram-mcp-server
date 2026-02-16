@@ -16,10 +16,10 @@ export function registerInfoTools(server: FastMCP) {
 
   server.addTool({
     name: "list_payment_terms",
-    description: "List all payment terms (Zahlungsbedingungen) in Papierkram. Use the returned IDs when creating invoices.",
+    description: "List payment terms (Zahlungsbedingungen) in Papierkram. Use the returned IDs when creating invoices.",
     parameters: z.object({
       page: z.number().optional().describe("Page number"),
-      page_size: z.number().optional().describe("Items per page"),
+      page_size: z.number().optional().default(25).describe("Items per page (default: 25)"),
     }),
     execute: async (params) => {
       const client = getClient();
@@ -30,10 +30,10 @@ export function registerInfoTools(server: FastMCP) {
 
   server.addTool({
     name: "list_propositions",
-    description: "List all propositions (Waren/Dienstleistungen) in Papierkram. These are products and services that can be used in invoices and estimates.",
+    description: "List propositions (Waren/Dienstleistungen) in Papierkram. These are products and services that can be used in invoices and estimates.",
     parameters: z.object({
       page: z.number().optional().describe("Page number"),
-      page_size: z.number().optional().describe("Items per page"),
+      page_size: z.number().optional().default(25).describe("Items per page (default: 25)"),
       order_by: z.string().optional().describe("Field to order by"),
       order_direction: z.enum(["asc", "desc"]).optional().describe("Order direction"),
     }),

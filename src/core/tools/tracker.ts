@@ -1,23 +1,41 @@
 import { FastMCP } from "fastmcp";
 import { z } from "zod";
 import { getClient } from "../../api/client.js";
+import { compactList, compactTimeEntry, compactTask } from "../../api/transformers.js";
 
 export function registerTrackerTools(server: FastMCP) {
   // ---- Time Entries ----
 
   server.addTool({
     name: "list_time_entries",
-    description: "List all time entries in Papierkram. Supports pagination.",
+    description: "List time entries in Papierkram. Returns compact summaries by default. Supports pagination and filtering.",
     parameters: z.object({
       page: z.number().optional().describe("Page number"),
-      page_size: z.number().optional().describe("Items per page"),
+      page_size: z.number().optional().default(25).describe("Items per page (default: 25)"),
       order_by: z.string().optional().describe("Field to order by"),
       order_direction: z.enum(["asc", "desc"]).optional().describe("Order direction"),
+      compact: z.boolean().optional().default(true).describe("Return compact summaries (default: true). Set false for full API response."),
+      project_id: z.number().optional().describe("Filter by project ID"),
+      task_id: z.number().optional().describe("Filter by task ID"),
+      invoice_id: z.number().optional().describe("Filter by invoice ID"),
+      user_id: z.number().optional().describe("Filter by user ID"),
+      billing_state: z.enum(["billed", "unbilled", "billable", "unbillable", "archived"]).optional().describe("Filter by billing state"),
+      start_time_range_start: z.string().optional().describe("Filter by start time range start (RFC 3339, e.g. '2025-01-01T00:00:00Z')"),
+      start_time_range_end: z.string().optional().describe("Filter by start time range end (RFC 3339, e.g. '2025-12-31T23:59:59Z')"),
     }),
     execute: async (params) => {
+      const { compact, project_id, task_id, invoice_id, user_id, billing_state, start_time_range_start, start_time_range_end, ...query } = params;
+      if (project_id) (query as Record<string, unknown>).project_id = project_id;
+      if (task_id) (query as Record<string, unknown>).task_id = task_id;
+      if (invoice_id) (query as Record<string, unknown>).invoice_id = invoice_id;
+      if (user_id) (query as Record<string, unknown>).user_id = user_id;
+      if (billing_state) (query as Record<string, unknown>).billing_state = billing_state;
+      if (start_time_range_start) (query as Record<string, unknown>).start_time_range_start = start_time_range_start;
+      if (start_time_range_end) (query as Record<string, unknown>).start_time_range_end = start_time_range_end;
       const client = getClient();
-      const result = await client.list("/tracker/time_entries", params as Record<string, string | number | boolean>);
-      return JSON.stringify(result, null, 2);
+      const result = await client.list("/tracker/time_entries", query as Record<string, string | number | boolean>);
+      if (compact === false) return JSON.stringify(result, null, 2);
+      return JSON.stringify(compactList(result as Record<string, unknown>, compactTimeEntry), null, 2);
     },
   });
 
@@ -110,18 +128,23 @@ export function registerTrackerTools(server: FastMCP) {
 
   server.addTool({
     name: "list_tasks",
-    description: "List all tasks in Papierkram. Supports pagination.",
+    description: "List tasks in Papierkram. Returns compact summaries by default. Supports pagination and filtering by project.",
     parameters: z.object({
       page: z.number().optional().describe("Page number"),
-      page_size: z.number().optional().describe("Items per page"),
+      page_size: z.number().optional().default(25).describe("Items per page (default: 25)"),
       order_by: z.string().optional().describe("Field to order by"),
       order_direction: z.enum(["asc", "desc"]).optional().describe("Order direction"),
       project_id: z.number().optional().describe("Filter by project ID"),
+      proposition_id: z.number().optional().describe("Filter by proposition ID"),
+      compact: z.boolean().optional().default(true).describe("Return compact summaries (default: true). Set false for full API response."),
     }),
     execute: async (params) => {
+      const { compact, proposition_id, ...query } = params;
+      if (proposition_id) (query as Record<string, unknown>).proposition_id = proposition_id;
       const client = getClient();
-      const result = await client.list("/tracker/tasks", params as Record<string, string | number | boolean>);
-      return JSON.stringify(result, null, 2);
+      const result = await client.list("/tracker/tasks", query as Record<string, string | number | boolean>);
+      if (compact === false) return JSON.stringify(result, null, 2);
+      return JSON.stringify(compactList(result as Record<string, unknown>, compactTask), null, 2);
     },
   });
 
