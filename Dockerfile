@@ -5,7 +5,7 @@ COPY package*.json ./
 RUN npm ci
 COPY tsconfig.json ./
 COPY src/ ./src/
-RUN npm run build
+RUN npx tsc --sourceMap false
 
 # Stage 2: Production
 FROM node:22-alpine

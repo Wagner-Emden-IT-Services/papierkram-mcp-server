@@ -8,7 +8,7 @@ An [MCP](https://modelcontextprotocol.io/) (Model Context Protocol) server for t
 
 ## Features
 
-- **55 tools** covering the full Papierkram API v1
+- **56 tools** covering the full Papierkram API v1
 - **Two transports**: stdio (for Claude Desktop, Cursor, Claude Code) and HTTP/SSE (for n8n, custom integrations)
 - **Docker ready** for easy self-hosted deployment
 - TypeScript with Zod schema validation on all parameters
@@ -19,7 +19,7 @@ An [MCP](https://modelcontextprotocol.io/) (Model Context Protocol) server for t
 |------|-----------|:-----:|
 | **Contacts** | Companies & contact persons: list, get, create, update, delete | 10 |
 | **Invoices** | list, get, create, update, delete, cancel, archive, send, download PDF | 9 |
-| **Estimates** | list, get, create, update, delete, download PDF | 6 |
+| **Estimates** | list, get, create, update, delete, send, download PDF | 7 |
 | **Expenses** | list, get, create, update, delete | 5 |
 | **Projects** | list, get, create, update, delete, archive, unarchive | 7 |
 | **Time Tracking** | list, get, create, update, delete | 5 |
