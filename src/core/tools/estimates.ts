@@ -64,12 +64,17 @@ export function registerEstimateTools(server: FastMCP) {
       customer_id: z.number().optional().describe("Customer (company) ID"),
       contact_person_id: z.number().optional().describe("Contact person ID"),
       project_id: z.number().optional().describe("Project ID"),
+      custom_template_id: z.number().optional().describe("Custom document template ID (use get_estimate on an existing estimate to find available template IDs)"),
       line_items: z.array(lineItemSchema).optional().describe("Estimate line items"),
     }),
     execute: async (params) => {
-      const { customer_id, contact_person_id, project_id, line_items, ...rest } = params;
+      const { customer_id, contact_person_id, project_id, custom_template_id, line_items, ...rest } = params;
 
       const body: Record<string, unknown> = { ...rest };
+
+      if (custom_template_id) {
+        body.custom_template = { id: custom_template_id };
+      }
 
       if (customer_id || contact_person_id || project_id) {
         const customer: Record<string, unknown> = {};
@@ -108,12 +113,17 @@ export function registerEstimateTools(server: FastMCP) {
       customer_id: z.number().optional().describe("Customer (company) ID"),
       contact_person_id: z.number().optional().describe("Contact person ID"),
       project_id: z.number().optional().describe("Project ID"),
+      custom_template_id: z.number().optional().describe("Custom document template ID (use get_estimate on an existing estimate to find available template IDs)"),
       line_items: z.array(lineItemSchema).optional().describe("Estimate line items"),
     }),
     execute: async (params) => {
-      const { id, customer_id, contact_person_id, project_id, line_items, ...rest } = params;
+      const { id, customer_id, contact_person_id, project_id, custom_template_id, line_items, ...rest } = params;
 
       const body: Record<string, unknown> = { ...rest };
+
+      if (custom_template_id) {
+        body.custom_template = { id: custom_template_id };
+      }
 
       if (customer_id || contact_person_id || project_id) {
         const customer: Record<string, unknown> = {};

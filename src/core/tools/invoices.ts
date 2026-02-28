@@ -73,12 +73,13 @@ export function registerInvoiceTools(server: FastMCP) {
       billing_country: z.string().optional().describe("Billing address: country (e.g. 'DE')"),
       billing_ust_idnr: z.string().optional().describe("Billing address: VAT ID"),
       billing_email: z.string().optional().describe("Billing address: email"),
+      custom_template_id: z.number().optional().describe("Custom document template ID (use get_invoice on an existing invoice to find available template IDs)"),
       line_items: z.array(lineItemSchema).optional().describe("Invoice line items"),
     }),
     execute: async (params) => {
       const {
         customer_id, contact_person_id, project_id,
-        payment_term_id,
+        payment_term_id, custom_template_id,
         billing_company, billing_street, billing_zip, billing_city,
         billing_country, billing_ust_idnr, billing_email,
         line_items, ...rest
@@ -89,6 +90,11 @@ export function registerInvoiceTools(server: FastMCP) {
       // Build nested payment_term object
       if (payment_term_id) {
         body.payment_term = { id: payment_term_id };
+      }
+
+      // Build nested custom_template object
+      if (custom_template_id) {
+        body.custom_template = { id: custom_template_id };
       }
 
       // Build nested customer object
@@ -150,12 +156,13 @@ export function registerInvoiceTools(server: FastMCP) {
       billing_country: z.string().optional().describe("Billing address: country (e.g. 'DE')"),
       billing_ust_idnr: z.string().optional().describe("Billing address: VAT ID"),
       billing_email: z.string().optional().describe("Billing address: email"),
+      custom_template_id: z.number().optional().describe("Custom document template ID (use get_invoice on an existing invoice to find available template IDs)"),
       line_items: z.array(lineItemSchema).optional().describe("Invoice line items"),
     }),
     execute: async (params) => {
       const {
         id, customer_id, contact_person_id, project_id,
-        payment_term_id,
+        payment_term_id, custom_template_id,
         billing_company, billing_street, billing_zip, billing_city,
         billing_country, billing_ust_idnr, billing_email,
         line_items, ...rest
@@ -165,6 +172,10 @@ export function registerInvoiceTools(server: FastMCP) {
 
       if (payment_term_id) {
         body.payment_term = { id: payment_term_id };
+      }
+
+      if (custom_template_id) {
+        body.custom_template = { id: custom_template_id };
       }
 
       if (customer_id || contact_person_id || project_id) {

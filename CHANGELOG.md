@@ -5,6 +5,17 @@ Alle relevanten Aenderungen an diesem Projekt werden in dieser Datei dokumentier
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/)
 und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.3.1] - 2026-02-28
+
+### Hinzugefuegt
+
+- `custom_template_id` Parameter fuer `create_invoice`, `update_invoice`, `create_estimate` und `update_estimate`
+- Ermoeglicht die Auswahl einer benutzerdefinierten Dokumentenvorlage bei der Erstellung/Aktualisierung
+
+### Dokumentation
+
+- CLAUDE.md: Anleitung zum korrekten Abruf und Parsen der Swagger-Spec ergaenzt
+
 ## [1.3.0] - 2026-02-17
 
 ### Hinzugefuegt
@@ -52,6 +63,7 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 - Zod-Schema-Validierung fuer alle Parameter
 - MCP Resources und Prompt Templates
 
+[1.3.1]: https://github.com/Wagner-Emden-IT-Services/papierkram-mcp-server/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/Wagner-Emden-IT-Services/papierkram-mcp-server/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/Wagner-Emden-IT-Services/papierkram-mcp-server/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/Wagner-Emden-IT-Services/papierkram-mcp-server/compare/v1.0.0...v1.1.0
