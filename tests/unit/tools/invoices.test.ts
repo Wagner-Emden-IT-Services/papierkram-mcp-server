@@ -322,39 +322,41 @@ describe("Rechnungs-Tools", () => {
 
   // ========== send_invoice ==========
   describe("send_invoice", () => {
-    it("sendet mit send_via: 'email'", async () => {
+    it("sendet vollstaendiges email-Objekt (recipient/subject/body) bei send_via='email'", async () => {
       mockClient.post.mockResolvedValue({ id: 300, state: "sent" });
       const tool = server.getTool("send_invoice")!;
-      await tool.execute({ id: 300 });
-      expect(mockClient.post).toHaveBeenCalledWith(
-        "/income/invoices/300/deliver",
-        expect.objectContaining({ send_via: "email" }),
-      );
+      await tool.execute({
+        id: 300,
+        send_via: "email",
+        recipient: "test@example.com",
+        subject: "Ihre Rechnung",
+        body: "Anbei die Rechnung.",
+      });
+      expect(mockClient.post).toHaveBeenCalledWith("/income/invoices/300/deliver", {
+        send_via: "email",
+        email: {
+          recipient: "test@example.com",
+          subject: "Ihre Rechnung",
+          body: "Anbei die Rechnung.",
+        },
+      });
     });
 
-    it("baut verschachteltes email-Objekt wenn email angegeben", async () => {
-      mockClient.post.mockResolvedValue({ id: 300, state: "sent" });
+    it("finalisiert ohne Mailversand bei send_via='pdf' (Payload nur send_via)", async () => {
+      mockClient.post.mockResolvedValue({ id: 300, state: "open", invoice_no: "2026-0042" });
       const tool = server.getTool("send_invoice")!;
-      await tool.execute({ id: 300, email: "test@example.com" });
-      expect(mockClient.post).toHaveBeenCalledWith(
-        "/income/invoices/300/deliver",
-        expect.objectContaining({
-          send_via: "email",
-          email: { address: "test@example.com" },
-        }),
-      );
-    });
-
-    it("ruft client.post mit /deliver Pfad auf", async () => {
-      mockClient.post.mockResolvedValue({ id: 300, state: "sent" });
-      const tool = server.getTool("send_invoice")!;
-      const result = await tool.execute({ id: 300, email: "info@testfirma.de" });
-      expect(mockClient.post).toHaveBeenCalledWith(
-        "/income/invoices/300/deliver",
-        expect.any(Object),
-      );
+      const result = await tool.execute({ id: 300, send_via: "pdf" });
+      expect(mockClient.post).toHaveBeenCalledWith("/income/invoices/300/deliver", {
+        send_via: "pdf",
+      });
       const parsed = JSON.parse(result);
-      expect(parsed.state).toBe("sent");
+      expect(parsed.invoice_no).toBe("2026-0042");
+    });
+
+    it("verweigert send_via='email' ohne recipient/subject/body (kein stiller Default-Mail-Versand)", async () => {
+      const tool = server.getTool("send_invoice")!;
+      await expect(tool.execute({ id: 300, send_via: "email" })).rejects.toThrow();
+      expect(mockClient.post).not.toHaveBeenCalled();
     });
   });
 

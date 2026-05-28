@@ -175,29 +175,43 @@ describe("Estimate Tools", () => {
   // ---- send_estimate ----
 
   describe("send_estimate", () => {
-    it("Sendet POST an /income/estimates/{id}/deliver mit send_via email", async () => {
+    it("Sendet vollstaendiges email-Objekt (recipient/subject/body) bei send_via='email'", async () => {
       mockClient.post.mockResolvedValue({ status: "delivered" });
       const tool = server.getTool("send_estimate")!;
-      await tool.execute({ id: 400 });
+      await tool.execute({
+        id: 400,
+        send_via: "email",
+        recipient: "kunde@firma.de",
+        subject: "Unser Angebot",
+        body: "Anbei das Angebot.",
+      });
 
-      expect(mockClient.post).toHaveBeenCalledWith(
-        "/income/estimates/400/deliver",
-        expect.objectContaining({ send_via: "email" })
-      );
+      expect(mockClient.post).toHaveBeenCalledWith("/income/estimates/400/deliver", {
+        send_via: "email",
+        email: {
+          recipient: "kunde@firma.de",
+          subject: "Unser Angebot",
+          body: "Anbei das Angebot.",
+        },
+      });
     });
 
-    it("Baut optionales email-Objekt wenn Adresse angegeben", async () => {
-      mockClient.post.mockResolvedValue({ status: "delivered" });
+    it("Finalisiert ohne Mailversand bei send_via='pdf'", async () => {
+      mockClient.post.mockResolvedValue({ status: "delivered", estimate_no: "A-2026-0007" });
       const tool = server.getTool("send_estimate")!;
-      await tool.execute({ id: 400, email: "kunde@firma.de" });
+      const result = await tool.execute({ id: 400, send_via: "pdf" });
 
-      expect(mockClient.post).toHaveBeenCalledWith(
-        "/income/estimates/400/deliver",
-        expect.objectContaining({
-          send_via: "email",
-          email: { address: "kunde@firma.de" },
-        })
-      );
+      expect(mockClient.post).toHaveBeenCalledWith("/income/estimates/400/deliver", {
+        send_via: "pdf",
+      });
+      const parsed = JSON.parse(result);
+      expect(parsed.estimate_no).toBe("A-2026-0007");
+    });
+
+    it("Verweigert send_via='email' ohne recipient/subject/body", async () => {
+      const tool = server.getTool("send_estimate")!;
+      await expect(tool.execute({ id: 400, send_via: "email" })).rejects.toThrow();
+      expect(mockClient.post).not.toHaveBeenCalled();
     });
   });
 

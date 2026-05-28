@@ -5,6 +5,25 @@ Alle relevanten Aenderungen an diesem Projekt werden in dieser Datei dokumentier
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/)
 und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.4.0] - 2026-05-28
+
+### Geaendert (BREAKING)
+
+- `send_invoice` und `send_estimate`: Parameter-Schema komplett ueberarbeitet.
+  - Neuer Pflichtparameter `send_via` mit Enum `"email" | "pdf"` (Default `"email"`).
+  - `send_via="email"` erfordert nun `recipient`, `subject` und `body` (vorher: nur optionales `email: string`).
+  - `send_via="pdf"` finalisiert die Rechnung/das Angebot **ohne** Mailversand — Papierkram vergibt die Dokumentnummer, das PDF wird anschliessend ueber `download_invoice_pdf` / `download_estimate_pdf` abgeholt.
+  - Alter Parameter `email: string` entfaellt.
+
+### Behoben
+
+- `send_invoice` / `send_estimate`: HTTP 422 (`additional properties: address`) bei gesetztem `email`-Parameter. Tool sendete frueher `email: { address }`, korrekt laut Papierkram-Swagger ist `email: { recipient, subject, body }` mit `additionalProperties: false`. Issue #1.
+- Kein stiller Default-Mail-Versand mehr: ein versehentlicher `send_invoice({ id })`-Aufruf wirft jetzt einen Fehler, statt unbemerkt die Papierkram-Standardmail an die Kunden-Default-Adresse auszuloesen.
+
+### Hinzugefuegt
+
+- `send_via: "pdf"`-Modus ermoeglicht Rechnungs-Finalisierung (RE-Nummern-Vergabe) ohne Mailversand. Workflow: `send_invoice({ id, send_via: "pdf" })` → `download_invoice_pdf({ id })`.
+
 ## [1.3.1] - 2026-02-28
 
 ### Hinzugefuegt

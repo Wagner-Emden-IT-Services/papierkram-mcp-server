@@ -165,21 +165,47 @@ export function registerEstimateTools(server: FastMCP) {
 
   server.addTool({
     name: "send_estimate",
-    description: "Send/deliver an estimate via email in Papierkram.",
-    parameters: z.object({
-      id: z.number().describe("Estimate ID to send"),
-      email: z.string().optional().describe("Recipient email address (uses customer default if omitted)"),
-    }),
+    description:
+      "Deliver an estimate in Papierkram. With send_via='email' the estimate is mailed (recipient, subject and body are required). With send_via='pdf' the estimate is finalised without sending an email - the PDF can then be retrieved via download_estimate_pdf. Either way Papierkram assigns the final estimate number.",
+    parameters: z
+      .object({
+        id: z.number().describe("Estimate ID to deliver"),
+        send_via: z
+          .enum(["email", "pdf"])
+          .default("email")
+          .describe("'email' sends the estimate by mail. 'pdf' finalises without sending - use download_estimate_pdf afterwards."),
+        recipient: z.string().email().optional().describe("Recipient email address. Required when send_via='email'."),
+        subject: z
+          .string()
+          .optional()
+          .describe("Email subject. Required when send_via='email'. Papierkram template variables like {{angebot.angebotsnummer}} are supported."),
+        body: z
+          .string()
+          .optional()
+          .describe("Email body. Required when send_via='email'. Papierkram template variables are supported."),
+      })
+      .refine(
+        (p) => p.send_via !== "email" || (!!p.recipient && !!p.subject && !!p.body),
+        {
+          message:
+            "send_via='email' requires recipient, subject and body. Use send_via='pdf' to finalise without sending an email.",
+        },
+      ),
     execute: async (params) => {
-      const { id, email } = params;
-      const body: Record<string, unknown> = {
-        send_via: "email",
-      };
-      if (email) {
-        body.email = { address: email };
+      const { id, send_via, recipient, subject, body } = params;
+      let payload: Record<string, unknown>;
+      if (send_via === "pdf") {
+        payload = { send_via: "pdf" };
+      } else {
+        if (!recipient || !subject || !body) {
+          throw new Error(
+            "send_via='email' requires recipient, subject and body. Use send_via='pdf' to finalise without sending an email.",
+          );
+        }
+        payload = { send_via: "email", email: { recipient, subject, body } };
       }
       const client = getClient();
-      const result = await client.post(`/income/estimates/${id}/deliver`, body);
+      const result = await client.post(`/income/estimates/${id}/deliver`, payload);
       return JSON.stringify(result, null, 2);
     },
   });
