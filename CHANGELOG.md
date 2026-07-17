@@ -5,6 +5,25 @@ Alle relevanten Aenderungen an diesem Projekt werden in dieser Datei dokumentier
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/)
 und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.0.1] - 2026-07-17
+
+Packaging-/Infrastruktur-Release (erster Release ueber npm Trusted Publishing / OIDC).
+
+### Geaendert
+
+- **Node >= 20 erforderlich** (Node 18 entfernt): `fastmcp`/`undici` benoetigen das globale `File`,
+  das es erst ab Node 20 gibt; Node 18 ist zudem seit April 2025 EOL. `engines` und CI-Matrix (20/22/24) angepasst.
+
+### Behoben
+
+- **Sauberer npm-Tarball**: `dist/` wird vor dem Build geleert (`prebuild`), sodass die in 2.0.0 noch
+  enthaltenen toten `api/types.*`-Stubs (Rest der geloeschten Datei) nicht mehr mitgeliefert werden.
+- `repository.url` auf `git+https`-Form normalisiert (npm-Publish-Warnung entfaellt).
+
+### Infrastruktur
+
+- npm **Trusted Publishing** (OIDC) via GitHub Actions (`.github/workflows/publish.yml`) — Releases ohne langlebige Tokens.
+
 ## [2.0.0] - 2026-07-17
 
 Groesseres Refactoring auf Basis der Anthropic-`mcp-builder`-Best-Practices. Enthaelt
@@ -128,6 +147,7 @@ mehrere Korrektheits-Fixes gegen die Papierkram-Swagger-Spec sowie Contract-Aend
 - Zod-Schema-Validierung fuer alle Parameter
 - MCP Resources und Prompt Templates
 
+[2.0.1]: https://github.com/Wagner-Emden-IT-Services/papierkram-mcp-server/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/Wagner-Emden-IT-Services/papierkram-mcp-server/compare/v1.4.0...v2.0.0
 [1.4.0]: https://github.com/Wagner-Emden-IT-Services/papierkram-mcp-server/compare/v1.3.1...v1.4.0
 [1.3.1]: https://github.com/Wagner-Emden-IT-Services/papierkram-mcp-server/compare/v1.3.0...v1.3.1
