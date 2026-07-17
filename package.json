@@ -1,6 +1,6 @@
 {
   "name": "papierkram-mcp-server",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "MCP Server for the Papierkram.de accounting API",
   "author": "Wagner-Emden IT Services",
   "license": "MIT",
@@ -54,7 +54,8 @@
     "@modelcontextprotocol/sdk": "1.21.2"
   },
   "dependencies": {
-    "fastmcp": "^1.21.0",
+    "@modelcontextprotocol/sdk": "1.21.2",
+    "fastmcp": "1.27.7",
     "zod": "^3.24.2"
   },
   "devDependencies": {

@@ -5,6 +5,19 @@ Alle relevanten Aenderungen an diesem Projekt werden in dieser Datei dokumentier
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/)
 und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.0.2] - 2026-07-17
+
+### Behoben
+
+- **Frische Installationen (`npm install -g` / `npx`) crashten beim Start** mit
+  `Error: Server does not support completions`. Ursache: Der `overrides`-Pin von
+  `@modelcontextprotocol/sdk` auf `1.21.2` wird **nicht** an Konsumenten mitveröffentlicht,
+  daher zog ein frischer Install die neueste `@modelcontextprotocol/sdk` (1.29.0), die mit
+  `fastmcp@1.27.7` inkompatibel ist. `@modelcontextprotocol/sdk` ist jetzt eine **direkte
+  Dependency, gepinnt auf `1.21.2`**, und `fastmcp` ist exakt auf `1.27.7` gepinnt — damit
+  bekommen Konsumenten die funktionierende Kombination. (Der lokale Dev-Build war nie
+  betroffen, weil dort `overrides` griff.)
+
 ## [2.0.1] - 2026-07-17
 
 Packaging-/Infrastruktur-Release (erster Release ueber npm Trusted Publishing / OIDC).
@@ -147,6 +160,7 @@ mehrere Korrektheits-Fixes gegen die Papierkram-Swagger-Spec sowie Contract-Aend
 - Zod-Schema-Validierung fuer alle Parameter
 - MCP Resources und Prompt Templates
 
+[2.0.2]: https://github.com/Wagner-Emden-IT-Services/papierkram-mcp-server/compare/v2.0.1...v2.0.2
 [2.0.1]: https://github.com/Wagner-Emden-IT-Services/papierkram-mcp-server/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/Wagner-Emden-IT-Services/papierkram-mcp-server/compare/v1.4.0...v2.0.0
 [1.4.0]: https://github.com/Wagner-Emden-IT-Services/papierkram-mcp-server/compare/v1.3.1...v1.4.0
