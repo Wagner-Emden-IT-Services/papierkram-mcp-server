@@ -112,8 +112,9 @@ describe("Expense Voucher Tools", () => {
           name: "Neue Ausgabe",
           provenance: "domestic",
           creditor: { id: 101 },
+          // vat_rate is normalized from "19%" to the API's decimal fraction 0.19
           line_items: [
-            { name: "Druckerpatronen", amount: 59.99, vat_rate: "19%", category: "Sonstige betriebliche Aufwendungen" },
+            { name: "Druckerpatronen", amount: 59.99, vat_rate: 0.19, category: "Sonstige betriebliche Aufwendungen" },
           ],
         })
       );
@@ -125,6 +126,7 @@ describe("Expense Voucher Tools", () => {
       await tool.execute({
         name: "Ausgabe ohne Lieferant",
         provenance: "eu",
+        line_items: [{ name: "Pos", amount: 10, vat_rate: 0.19, category: "Bürobedarf" }],
       });
 
       const callBody = mockClient.create.mock.calls[0][1] as Record<string, unknown>;
@@ -132,16 +134,17 @@ describe("Expense Voucher Tools", () => {
       expect(callBody).toHaveProperty("provenance", "eu");
     });
 
-    it("Erfordert provenance als Pflichtfeld (domestic, eu, non_eu)", async () => {
+    it("Erfordert provenance als Pflichtfeld (domestic, eu, foreign)", async () => {
       mockClient.create.mockResolvedValue({ id: 504 });
       const tool = server.getTool("create_expense_voucher")!;
       await tool.execute({
-        name: "EU-Rechnung",
-        provenance: "non_eu",
+        name: "Nicht-EU-Rechnung",
+        provenance: "foreign",
+        line_items: [{ name: "Pos", amount: 10, vat_rate: 0.19, category: "Bürobedarf" }],
       });
 
       const callBody = mockClient.create.mock.calls[0][1] as Record<string, unknown>;
-      expect(callBody).toHaveProperty("provenance", "non_eu");
+      expect(callBody).toHaveProperty("provenance", "foreign");
     });
   });
 

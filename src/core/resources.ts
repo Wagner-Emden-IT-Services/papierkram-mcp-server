@@ -1,5 +1,6 @@
 import { FastMCP } from "fastmcp";
 import { getClient } from "../api/client.js";
+import { toToolJson } from "../api/format.js";
 
 export function registerResources(server: FastMCP) {
   // Company resource
@@ -17,7 +18,7 @@ export function registerResources(server: FastMCP) {
     async load({ id }) {
       const client = getClient();
       const company = await client.get(`/contact/companies/${id}`);
-      return { text: JSON.stringify(company, null, 2) };
+      return { text: toToolJson(company) };
     },
   });
 
@@ -36,7 +37,7 @@ export function registerResources(server: FastMCP) {
     async load({ id }) {
       const client = getClient();
       const invoice = await client.get(`/income/invoices/${id}`);
-      return { text: JSON.stringify(invoice, null, 2) };
+      return { text: toToolJson(invoice) };
     },
   });
 
@@ -55,7 +56,7 @@ export function registerResources(server: FastMCP) {
     async load({ id }) {
       const client = getClient();
       const project = await client.get(`/projects/${id}`);
-      return { text: JSON.stringify(project, null, 2) };
+      return { text: toToolJson(project) };
     },
   });
 }

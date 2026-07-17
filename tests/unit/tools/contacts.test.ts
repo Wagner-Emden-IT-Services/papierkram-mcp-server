@@ -338,4 +338,47 @@ describe("Kontakt-Tools", () => {
       expect(result).toBe("Contact person 200 deleted successfully.");
     });
   });
+
+  // ---- v2.0 Verhalten: notes, strict, contact_type-Filter ----
+
+  describe("update_company notes (API-Feld 'notes', nicht 'note')", () => {
+    it("sendet die Notiz unter dem korrekten Feld 'notes'", async () => {
+      mockClient.update.mockResolvedValue({ id: 100 });
+      const tool = server.getTool("update_company")!;
+      await tool.execute({ id: 100, notes: "Wichtiger Kunde" });
+
+      const body = mockClient.update.mock.calls[0][1] as Record<string, unknown>;
+      expect(body).toHaveProperty("notes", "Wichtiger Kunde");
+      expect(body).not.toHaveProperty("note");
+    });
+
+    it("das Schema lehnt das alte Feld 'note' ab (.strict())", () => {
+      const tool = server.getTool("update_company")!;
+      const schema = tool.parameters as { safeParse(v: unknown): { success: boolean } };
+      expect(schema.safeParse({ id: 100, note: "alt" }).success).toBe(false);
+      expect(schema.safeParse({ id: 100, notes: "neu" }).success).toBe(true);
+    });
+  });
+
+  describe("list_companies contact_type-Filter (client-seitig)", () => {
+    it("filtert die zurueckgegebene Seite nach contact_type", async () => {
+      mockClient.list.mockResolvedValue({
+        entries: [
+          { id: 1, name: "Kunde A", contact_type: "customer", email: "a@x.de" },
+          { id: 2, name: "Lieferant B", contact_type: "supplier", email: "b@x.de" },
+          { id: 3, name: "Kunde C", contact_type: "customer", email: "c@x.de" },
+        ],
+        has_more: false,
+      });
+
+      const tool = server.getTool("list_companies")!;
+      const parsed = JSON.parse(await tool.execute({ page_size: 25, compact: false, contact_type: "supplier" }));
+
+      expect(parsed.entries).toHaveLength(1);
+      expect(parsed.entries[0].id).toBe(2);
+      // contact_type wird NICHT als Query-Param an die API geschickt (sie ignoriert ihn)
+      const query = mockClient.list.mock.calls[0][1] as Record<string, unknown>;
+      expect(query).not.toHaveProperty("contact_type");
+    });
+  });
 });

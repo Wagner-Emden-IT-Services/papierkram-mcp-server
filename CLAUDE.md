@@ -19,6 +19,8 @@ src/
 ├── core/
 │   ├── tools/                  # MCP tool definitions (one file per API area)
 │   │   ├── index.ts            # Aggregator - registers all tools
+│   │   ├── _shared.ts          # Annotation presets, shared Zod schemas, body builders, vat normalization
+│   │   ├── _categories.ts      # Auto-generated expense category enum (from Swagger)
 │   │   ├── contacts.ts         # Companies & contact persons
 │   │   ├── invoices.ts         # Income invoices
 │   │   ├── estimates.ts        # Income estimates
@@ -30,8 +32,9 @@ src/
 │   ├── resources.ts            # MCP resource templates
 │   └── prompts.ts              # MCP prompt templates
 ├── api/
-│   ├── client.ts               # HTTP client (auth, error handling, rate limits)
-│   └── types.ts                # TypeScript types for API responses
+│   ├── client.ts               # HTTP client (auth, timeout, error mapping, rate limits)
+│   ├── errors.ts               # mapApiError/networkError -> UserError (actionable messages)
+│   └── format.ts               # toToolJson: CHARACTER_LIMIT truncation for tool output
 └── config/
     └── index.ts                # Environment variable configuration
 ```
