@@ -32,7 +32,7 @@ An [MCP](https://modelcontextprotocol.io/) (Model Context Protocol) server for t
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) 18+ (or Docker)
+- [Node.js](https://nodejs.org/) 20+ (or Docker)
 - A [Papierkram.de](https://papierkram.de) account with API access
 
 ### Get your API Key
