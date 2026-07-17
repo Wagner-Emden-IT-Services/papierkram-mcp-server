@@ -5,6 +5,15 @@ Alle relevanten Aenderungen an diesem Projekt werden in dieser Datei dokumentier
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/)
 und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.0.3] - 2026-07-17
+
+### Behoben
+
+- **`create_project` / `update_project`: `budget_money` und `budget_time`** wurden als Zahl
+  gesendet, die Papierkram-API verlangt sie aber als **String** → HTTP 422
+  (`did not match: string, null`). Werden jetzt vor dem Senden per `String()` konvertiert
+  (analog zum `complete`-Feld bei Aufgaben). Gefunden beim Live-Tool-Test gegen die API.
+
 ## [2.0.2] - 2026-07-17
 
 ### Behoben
@@ -160,6 +169,7 @@ mehrere Korrektheits-Fixes gegen die Papierkram-Swagger-Spec sowie Contract-Aend
 - Zod-Schema-Validierung fuer alle Parameter
 - MCP Resources und Prompt Templates
 
+[2.0.3]: https://github.com/Wagner-Emden-IT-Services/papierkram-mcp-server/compare/v2.0.2...v2.0.3
 [2.0.2]: https://github.com/Wagner-Emden-IT-Services/papierkram-mcp-server/compare/v2.0.1...v2.0.2
 [2.0.1]: https://github.com/Wagner-Emden-IT-Services/papierkram-mcp-server/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/Wagner-Emden-IT-Services/papierkram-mcp-server/compare/v1.4.0...v2.0.0

@@ -59,8 +59,11 @@ export function registerProjectTools(server: FastMCP) {
       })
       .strict(),
     execute: async (params) => {
-      const { customer_id, ...rest } = params;
+      const { customer_id, budget_money, budget_time, ...rest } = params;
       const body: Record<string, unknown> = { ...rest, customer: { id: customer_id } };
+      // Papierkram expects budget_money / budget_time as strings, not numbers.
+      if (budget_money !== undefined) body.budget_money = String(budget_money);
+      if (budget_time !== undefined) body.budget_time = String(budget_time);
       const client = getClient();
       const result = await client.create("/projects", body);
       return toToolJson(result);
@@ -87,15 +90,19 @@ export function registerProjectTools(server: FastMCP) {
       })
       .strict(),
     execute: async (params) => {
-      const { id, customer_id, ...rest } = params;
+      const { id, customer_id, budget_money, budget_time, ...rest } = params;
       const body: Record<string, unknown> = { ...rest };
       if (customer_id !== undefined) {
         body.customer = { id: customer_id };
       }
+      // Papierkram expects budget_money / budget_time as strings, not numbers.
+      if (budget_money !== undefined) body.budget_money = String(budget_money);
+      if (budget_time !== undefined) body.budget_time = String(budget_time);
       const client = getClient();
       const result = await client.update(`/projects/${id}`, body);
       return toToolJson(result);
     },
+
   });
 
   server.addTool({

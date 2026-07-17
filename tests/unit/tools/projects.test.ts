@@ -97,6 +97,16 @@ describe("Project Tools", () => {
       expect(schema.safeParse({ name: "Projekt ohne Kunde" }).success).toBe(false);
       expect(schema.safeParse({ name: "Mit Kunde", customer_id: 100 }).success).toBe(true);
     });
+
+    it("sendet budget_money/budget_time als String (API verlangt String, nicht Zahl)", async () => {
+      mockClient.create.mockResolvedValue(fixtures.project);
+      const tool = server.getTool("create_project")!;
+      await tool.execute({ name: "Budget", customer_id: 100, budget_money: 1000, budget_time: 40 });
+
+      const body = mockClient.create.mock.calls[0][1] as Record<string, unknown>;
+      expect(body.budget_money).toBe("1000");
+      expect(body.budget_time).toBe("40");
+    });
   });
 
   // ---- update_project ----
@@ -117,6 +127,16 @@ describe("Project Tools", () => {
       const body = mockClient.update.mock.calls[0][1] as Record<string, unknown>;
       expect(body).not.toHaveProperty("id");
       expect(body).not.toHaveProperty("customer_id");
+    });
+
+    it("sendet budget_money/budget_time als String", async () => {
+      mockClient.update.mockResolvedValue(fixtures.project);
+      const tool = server.getTool("update_project")!;
+      await tool.execute({ id: 600, budget_money: 2500, budget_time: 12 });
+
+      const body = mockClient.update.mock.calls[0][1] as Record<string, unknown>;
+      expect(body.budget_money).toBe("2500");
+      expect(body.budget_time).toBe("12");
     });
   });
 
