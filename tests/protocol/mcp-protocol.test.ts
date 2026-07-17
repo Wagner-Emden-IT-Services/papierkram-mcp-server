@@ -63,6 +63,27 @@ describe("MCP-Protokoll Registrierung", () => {
     }
   });
 
+  it("Jedes Tool deklariert MCP-Annotations (openWorldHint immer true)", () => {
+    for (const tool of server.tools) {
+      const ann = (tool as unknown as { annotations?: Record<string, unknown> }).annotations;
+      expect(ann, `Tool "${tool.name}" hat keine annotations`).toBeTruthy();
+      expect(ann!.openWorldHint, `Tool "${tool.name}" openWorldHint`).toBe(true);
+      expect(typeof ann!.readOnlyHint, `Tool "${tool.name}" readOnlyHint`).toBe("boolean");
+      expect(typeof ann!.destructiveHint, `Tool "${tool.name}" destructiveHint`).toBe("boolean");
+    }
+  });
+
+  it("Read-Tools sind readOnly, Delete/Cancel sind destruktiv", () => {
+    const get = (name: string) => (server.tools.find((t) => t.name === name) as unknown as { annotations: Record<string, boolean> }).annotations;
+    expect(get("list_invoices").readOnlyHint).toBe(true);
+    expect(get("get_company").readOnlyHint).toBe(true);
+    expect(get("delete_invoice").destructiveHint).toBe(true);
+    expect(get("cancel_invoice").destructiveHint).toBe(true);
+    // send_invoice finalisiert -> nicht read-only, destruktiv
+    expect(get("send_invoice").readOnlyHint).toBe(false);
+    expect(get("send_invoice").destructiveHint).toBe(true);
+  });
+
   it("Bestimmte erwartete Tool-Namen existieren (Stichprobe)", () => {
     const expectedTools = [
       // Contacts

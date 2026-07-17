@@ -91,15 +91,11 @@ describe("Project Tools", () => {
       expect(body).not.toHaveProperty("customer_id");
     });
 
-    it("sendet keinen customer-Key wenn customer_id fehlt", async () => {
-      mockClient.create.mockResolvedValue(fixtures.project);
-
+    it("verlangt customer_id im Schema (API erfordert customer)", () => {
       const tool = server.getTool("create_project")!;
-      await tool.execute({ name: "Projekt ohne Kunde" });
-
-      const body = mockClient.create.mock.calls[0][1] as Record<string, unknown>;
-      expect(body).not.toHaveProperty("customer");
-      expect(body).toHaveProperty("name", "Projekt ohne Kunde");
+      const schema = tool.parameters as { safeParse(v: unknown): { success: boolean } };
+      expect(schema.safeParse({ name: "Projekt ohne Kunde" }).success).toBe(false);
+      expect(schema.safeParse({ name: "Mit Kunde", customer_id: 100 }).success).toBe(true);
     });
   });
 

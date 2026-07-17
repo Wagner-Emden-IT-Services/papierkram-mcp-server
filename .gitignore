@@ -11,3 +11,7 @@ DEPLOYMENT.local.md
 .DS_Store
 coverage/
 papierkram-api-referenz.md
+
+# Local reference / tooling artifacts (not part of the package)
+graphify-out/
+mcp-builder/

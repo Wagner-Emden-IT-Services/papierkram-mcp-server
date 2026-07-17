@@ -5,6 +5,52 @@ Alle relevanten Aenderungen an diesem Projekt werden in dieser Datei dokumentier
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/)
 und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.0.0] - 2026-07-17
+
+Groesseres Refactoring auf Basis der Anthropic-`mcp-builder`-Best-Practices. Enthaelt
+mehrere Korrektheits-Fixes gegen die Papierkram-Swagger-Spec sowie Contract-Aenderungen
+(daher Major-Version). Alle 56 Tool-Namen bleiben unveraendert.
+
+### Geaendert (BREAKING)
+
+- **Pflicht-`line_items`**: `create_invoice`, `create_estimate` und `create_expense_voucher` verlangen jetzt mindestens eine Position (`line_items` war zuvor optional, die API erfordert sie).
+- **Pflicht-Assoziationen** (von der API verlangt): `create_time_entry` erfordert `task_id`, `create_task` erfordert `project_id`, `create_project` erfordert `customer_id`.
+- **`vat_rate`** akzeptiert nun Zahl (Dezimalbruch, z.B. `0.19`) **oder** String (`"19%"`) und wird vor dem Senden auf den API-Dezimalbruch normalisiert. Empfohlenes Format ist jetzt `0.19`.
+- **`provenance`** bei Ausgabebelegen: Enum-Wert `non_eu` → **`foreign`** (der bisherige Wert loeste immer HTTP 422 aus).
+- **Ausgabe-`category`** ist jetzt ein festes Enum der ~94 gueltigen Papierkram-Kontobezeichnungen statt Freitext.
+- **`notes`**: Das interne Notizfeld bei `create_company`/`update_company` heisst jetzt `notes` (API-Feldname). Der alte Parameter `note` wurde von der API stillschweigend verworfen.
+- **`.strict()`** auf allen Write-Tools (create/update/send): unbekannte oder vertippte Parameter werden jetzt abgelehnt statt still ignoriert.
+- **Schema-Constraints**: IDs muessen positive Ganzzahlen sein, `page_size` ist auf 1–100 begrenzt, E-Mail-Felder werden validiert.
+- **Grosse Listen-Antworten** koennen ab 25 000 Zeichen gekuerzt werden (mit `truncated`/`truncation_message`-Metadaten). PDF-Downloads sind ausgenommen.
+
+### Behoben
+
+- `update_company` schrieb die Notiz unter `note` statt `notes` → die Notiz ging still verloren (§ Datenverlust).
+- `create_expense_voucher`: `provenance: "non_eu"` fuehrte immer zu HTTP 422 (API erwartet `foreign`).
+- `list_companies`: Der `contact_type`-Filter wurde von der API ignoriert; er filtert jetzt client-seitig die zurueckgegebene Seite (mit Hinweis in der Description).
+- Falsy-Guards im ID-Handling verwarfen eine legitime `id = 0` (jetzt `!== undefined`).
+
+### Hinzugefuegt
+
+- **MCP-Annotations** (`readOnlyHint`/`destructiveHint`/`idempotentHint`/`openWorldHint` + `title`) auf allen 56 Tools; `send_invoice`/`send_estimate` sind als destruktiv/finalisierend gekennzeichnet.
+- **Handlungsleitende Fehlermeldungen** via `UserError` mit statusspezifischer Guidance (401/403/404/422/429/5xx), `Retry-After`-Auswertung bei 429 und Body-Kuerzung (kein Roh-Body-Leak).
+- **Request-Timeout** (30 s, konfigurierbar via `PAPIERKRAM_TIMEOUT_MS`) via AbortController.
+- **Startup-Fast-Fail**: Der Server validiert Credentials beim Boot statt beim ersten Tool-Call.
+- **Graceful Shutdown** bei `SIGINT`/`SIGTERM` (stdio und HTTP).
+- **Response-Size-Guard** (`CHARACTER_LIMIT` 25 000) mit Truncation-Hinweisen.
+- Erweiterte Tool-Descriptions (Returns-Hinweise, Disambiguierung, Pflichtfelder).
+
+### Geaendert (nicht-breaking)
+
+- Die im MCP-Handshake gemeldete Version wird jetzt aus `package.json` abgeleitet (vorher hart `1.0.0`).
+- Intern: geteilte Helfer (Annotations, Schemas, Body-Builder), DRY-Refactor der create/update-Handler, Entfernung des toten `src/api/types.ts`.
+
+### Nicht geaendert (bewusste Entscheidung nach Verifikation)
+
+- **Transport bleibt SSE**: In der installierten fastmcp-Version bedient `httpStream` **nicht** zusaetzlich `/sse` — eine Migration wuerde die bestehende n8n-SSE-Integration brechen. SSE stellt bereits `/health` + `/ping` bereit.
+- **PDF-Downloads** liefern weiterhin base64 (fastmcp 1.27.7 hat keinen Embedded-Resource-Content-Typ).
+- **Keine Tool-Umbenennung** (kein `papierkram_`-Praefix): MCP-Clients namespacen bereits per Server-ID.
+
 ## [1.4.0] - 2026-05-28
 
 ### Geaendert (BREAKING)
@@ -82,6 +128,8 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 - Zod-Schema-Validierung fuer alle Parameter
 - MCP Resources und Prompt Templates
 
+[2.0.0]: https://github.com/Wagner-Emden-IT-Services/papierkram-mcp-server/compare/v1.4.0...v2.0.0
+[1.4.0]: https://github.com/Wagner-Emden-IT-Services/papierkram-mcp-server/compare/v1.3.1...v1.4.0
 [1.3.1]: https://github.com/Wagner-Emden-IT-Services/papierkram-mcp-server/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/Wagner-Emden-IT-Services/papierkram-mcp-server/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/Wagner-Emden-IT-Services/papierkram-mcp-server/compare/v1.1.0...v1.2.0

@@ -324,7 +324,7 @@ describe("PapierkramClient", () => {
 
       await expect(
         client.getPdf("/income/invoices/99999/pdf")
-      ).rejects.toThrow("Papierkram API error 404 Not Found");
+      ).rejects.toThrow(/not found \(404\)/i);
     });
   });
 
@@ -332,20 +332,20 @@ describe("PapierkramClient", () => {
   // 10. Fehlerbehandlung
   // =============================================
   describe("Fehlerbehandlung", () => {
-    it("sollte bei 400 Bad Request einen Error mit Status und Body werfen", async () => {
+    it("sollte bei 400 Bad Request einen aussagekraeftigen Error werfen (inkl. Body-Detail)", async () => {
       const errorBody = { error: "Ungueltige Parameter" };
       mockFetch(errorBody, { status: 400, statusText: "Bad Request" });
 
       await expect(client.get("/companies/invalid")).rejects.toThrow(
-        'Papierkram API error 400 Bad Request: {"error":"Ungueltige Parameter"}'
+        /rejected the request \(400\).*Ungueltige Parameter/is
       );
     });
 
-    it("sollte bei 401 Unauthorized einen Error werfen", async () => {
+    it("sollte bei 401 Unauthorized einen handlungsleitenden Error werfen", async () => {
       mockFetch({ error: "Nicht autorisiert" }, { status: 401, statusText: "Unauthorized" });
 
       await expect(client.get("/companies")).rejects.toThrow(
-        "Papierkram API error 401 Unauthorized"
+        /authentication failed \(401\)/i
       );
     });
 
@@ -356,7 +356,7 @@ describe("PapierkramClient", () => {
       });
 
       await expect(client.get("/companies")).rejects.toThrow(
-        "Papierkram API error 500 Internal Server Error"
+        /server error \(500\)/i
       );
     });
   });

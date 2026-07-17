@@ -1,4 +1,8 @@
 import { loadConfig } from "../config/index.js";
+import { mapApiError, networkError } from "./errors.js";
+
+/** Request timeout in ms (override via PAPIERKRAM_TIMEOUT_MS). */
+const REQUEST_TIMEOUT_MS = parseInt(process.env.PAPIERKRAM_TIMEOUT_MS || "30000", 10);
 
 export class PapierkramClient {
   private baseUrl: string;
@@ -8,6 +12,26 @@ export class PapierkramClient {
     const config = loadConfig();
     this.baseUrl = `https://${config.subdomain}.papierkram.de/api/v1`;
     this.apiKey = config.apiKey;
+  }
+
+  /** Runs fetch with an abort-based timeout and translates network failures. */
+  private async doFetch(url: string, init: RequestInit): Promise<Response> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    try {
+      return await fetch(url, { ...init, signal: controller.signal });
+    } catch (error) {
+      throw networkError(error);
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  private warnOnRateLimit(response: Response): void {
+    const remaining = response.headers.get("X-RateLimit-Remaining");
+    if (remaining && parseInt(remaining, 10) <= 5) {
+      console.error(`[papierkram] Rate limit warning: ${remaining} requests remaining`);
+    }
   }
 
   private async request<T>(
@@ -38,20 +62,17 @@ export class PapierkramClient {
       init.body = JSON.stringify(body);
     }
 
-    const response = await fetch(url.toString(), init);
+    const response = await this.doFetch(url.toString(), init);
 
-    // Handle rate limiting
-    const remaining = response.headers.get("X-RateLimit-Remaining");
-    if (remaining && parseInt(remaining, 10) <= 5) {
-      console.error(
-        `[papierkram] Rate limit warning: ${remaining} requests remaining`
-      );
-    }
+    this.warnOnRateLimit(response);
 
     if (!response.ok) {
       const errorBody = await response.text();
-      throw new Error(
-        `Papierkram API error ${response.status} ${response.statusText}: ${errorBody}`
+      throw mapApiError(
+        response.status,
+        response.statusText,
+        errorBody,
+        response.headers.get("Retry-After")
       );
     }
 
@@ -95,7 +116,7 @@ export class PapierkramClient {
 
   async getPdf(path: string): Promise<{ base64: string; contentType: string }> {
     const url = new URL(`${this.baseUrl}${path}`);
-    const response = await fetch(url.toString(), {
+    const response = await this.doFetch(url.toString(), {
       method: "GET",
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
@@ -103,10 +124,15 @@ export class PapierkramClient {
       },
     });
 
+    this.warnOnRateLimit(response);
+
     if (!response.ok) {
       const errorBody = await response.text();
-      throw new Error(
-        `Papierkram API error ${response.status} ${response.statusText}: ${errorBody}`
+      throw mapApiError(
+        response.status,
+        response.statusText,
+        errorBody,
+        response.headers.get("Retry-After")
       );
     }
 

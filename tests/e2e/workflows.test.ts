@@ -411,7 +411,7 @@ describe("End-to-End Workflows", () => {
         billing: { company: "Komplett-Kunde GmbH" },
         document_date: "2025-03-15",
         line_items: [
-          expect.objectContaining({ name: "Webentwicklung", quantity: 10, price: 120, vat_rate: "19%" }),
+          expect.objectContaining({ name: "Webentwicklung", quantity: 10, price: 120, vat_rate: 0.19 }),
         ],
       }));
 

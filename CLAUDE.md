@@ -19,6 +19,8 @@ src/
 ├── core/
 │   ├── tools/                  # MCP tool definitions (one file per API area)
 │   │   ├── index.ts            # Aggregator - registers all tools
+│   │   ├── _shared.ts          # Annotation presets, shared Zod schemas, body builders, vat normalization
+│   │   ├── _categories.ts      # Auto-generated expense category enum (from Swagger)
 │   │   ├── contacts.ts         # Companies & contact persons
 │   │   ├── invoices.ts         # Income invoices
 │   │   ├── estimates.ts        # Income estimates
@@ -30,8 +32,9 @@ src/
 │   ├── resources.ts            # MCP resource templates
 │   └── prompts.ts              # MCP prompt templates
 ├── api/
-│   ├── client.ts               # HTTP client (auth, error handling, rate limits)
-│   └── types.ts                # TypeScript types for API responses
+│   ├── client.ts               # HTTP client (auth, timeout, error mapping, rate limits)
+│   ├── errors.ts               # mapApiError/networkError -> UserError (actionable messages)
+│   └── format.ts               # toToolJson: CHARACTER_LIMIT truncation for tool output
 └── config/
     └── index.ts                # Environment variable configuration
 ```
@@ -109,3 +112,13 @@ cp .env.example .env            # Edit with your credentials
 docker compose build
 docker compose up -d
 ```
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+Rules:
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).

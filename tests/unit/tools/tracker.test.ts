@@ -124,7 +124,7 @@ describe("Tracker Tools", () => {
       expect(body).not.toHaveProperty("task_id");
     });
 
-    it("baut IMMER user-Objekt (user ist REQUIRED)", async () => {
+    it("baut IMMER user- und task-Objekt (beide REQUIRED)", async () => {
       mockClient.create.mockResolvedValue(fixtures.timeEntry);
 
       const tool = server.getTool("create_time_entry")!;
@@ -132,14 +132,22 @@ describe("Tracker Tools", () => {
         entry_date: "2025-01-15",
         started_at_time: "09:00",
         ended_at_time: "11:30",
+        task_id: 800,
         user_id: 1,
       });
 
       const body = mockClient.create.mock.calls[0][1] as Record<string, unknown>;
       expect(body).toHaveProperty("user", { id: 1 });
+      expect(body).toHaveProperty("task", { id: 800 });
       expect(body).not.toHaveProperty("user_id");
-      // Kein task wenn task_id fehlt
-      expect(body).not.toHaveProperty("task");
+    });
+
+    it("verlangt task_id im Schema (API erfordert task)", () => {
+      const tool = server.getTool("create_time_entry")!;
+      const schema = tool.parameters as { safeParse(v: unknown): { success: boolean } };
+      const base = { entry_date: "2025-01-15", started_at_time: "09:00", ended_at_time: "11:30", user_id: 1 };
+      expect(schema.safeParse(base).success).toBe(false);
+      expect(schema.safeParse({ ...base, task_id: 800 }).success).toBe(true);
     });
 
     it("sendet alle Felder korrekt an /tracker/time_entries", async () => {

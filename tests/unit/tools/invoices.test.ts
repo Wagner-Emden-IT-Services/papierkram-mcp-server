@@ -108,6 +108,7 @@ describe("Rechnungs-Tools", () => {
       await tool.execute({
         name: "Neue Rechnung",
         payment_term_id: 2,
+        line_items: [{ name: "Pos", quantity: 1, price: 100, vat_rate: 0.19 }],
       });
       expect(mockClient.create).toHaveBeenCalledWith(
         "/income/invoices",
@@ -126,6 +127,7 @@ describe("Rechnungs-Tools", () => {
         customer_id: 100,
         contact_person_id: 200,
         project_id: 600,
+        line_items: [{ name: "Pos", quantity: 1, price: 100, vat_rate: 0.19 }],
       });
       expect(mockClient.create).toHaveBeenCalledWith(
         "/income/invoices",
@@ -145,6 +147,7 @@ describe("Rechnungs-Tools", () => {
       await tool.execute({
         name: "Rechnung ohne Kunde",
         payment_term_id: 1,
+        line_items: [{ name: "Pos", quantity: 1, price: 100, vat_rate: 0.19 }],
       });
       const callArgs = mockClient.create.mock.calls[0][1] as Record<string, unknown>;
       expect(callArgs).not.toHaveProperty("customer");
@@ -163,6 +166,7 @@ describe("Rechnungs-Tools", () => {
         billing_country: "DE",
         billing_ust_idnr: "DE123456789",
         billing_email: "rechnung@testfirma.de",
+        line_items: [{ name: "Pos", quantity: 1, price: 100, vat_rate: 0.19 }],
       });
       expect(mockClient.create).toHaveBeenCalledWith(
         "/income/invoices",
@@ -180,7 +184,7 @@ describe("Rechnungs-Tools", () => {
       );
     });
 
-    it("transformiert line_items korrekt", async () => {
+    it("transformiert line_items und normalisiert vat_rate ('19%' -> 0.19, 0.07 bleibt)", async () => {
       mockClient.create.mockResolvedValue({ id: 302 });
       const tool = server.getTool("create_invoice")!;
       await tool.execute({
@@ -188,7 +192,7 @@ describe("Rechnungs-Tools", () => {
         payment_term_id: 1,
         line_items: [
           { name: "Webentwicklung", description: "Frontend", quantity: 10, unit: "Stunde", price: 120, vat_rate: "19%" },
-          { name: "Hosting", quantity: 1, price: 50, vat_rate: "19%" },
+          { name: "Hosting", quantity: 1, price: 50, vat_rate: 0.07 },
         ],
       });
       const callArgs = mockClient.create.mock.calls[0][1] as Record<string, unknown>;
@@ -200,15 +204,13 @@ describe("Rechnungs-Tools", () => {
         quantity: 10,
         unit: "Stunde",
         price: 120,
-        vat_rate: "19%",
+        vat_rate: 0.19,
       });
-      expect(items[1]).toEqual({
+      expect(items[1]).toMatchObject({
         name: "Hosting",
-        description: undefined,
         quantity: 1,
-        unit: undefined,
         price: 50,
-        vat_rate: "19%",
+        vat_rate: 0.07,
       });
     });
   });

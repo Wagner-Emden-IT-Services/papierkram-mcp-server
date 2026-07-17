@@ -148,10 +148,11 @@ src/
 ├── server/
 │   ├── server.ts         # MCP server setup + tool registration
 │   └── http-server.ts    # HTTP/SSE entry point
-├── core/tools/           # Tool definitions (one file per API area)
+├── core/tools/           # Tool definitions (one file per API area) + shared helpers
 ├── api/
-│   ├── client.ts         # HTTP client with auth & error handling
-│   └── types.ts          # TypeScript types
+│   ├── client.ts         # HTTP client with auth, timeout & error handling
+│   ├── errors.ts         # API/network errors -> actionable UserError messages
+│   └── format.ts         # Tool-output size guard (truncation)
 └── config/
     └── index.ts          # Environment configuration
 ```

@@ -104,6 +104,7 @@ describe("Estimate Tools", () => {
         customer_id: 100,
         contact_person_id: 200,
         project_id: 600,
+        line_items: [{ name: "Pos", quantity: 1, price: 100, vat_rate: 0.19 }],
       });
 
       expect(mockClient.create).toHaveBeenCalledWith(
@@ -126,6 +127,7 @@ describe("Estimate Tools", () => {
       await tool.execute({
         name: "Angebot ohne Kunde",
         document_date: "2025-03-01",
+        line_items: [{ name: "Pos", quantity: 1, price: 100, vat_rate: 0.19 }],
       });
 
       const callBody = mockClient.create.mock.calls[0][1] as Record<string, unknown>;
