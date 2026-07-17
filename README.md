@@ -9,6 +9,7 @@ An [MCP](https://modelcontextprotocol.io/) (Model Context Protocol) server for t
 ## Features
 
 - **56 tools** covering the full Papierkram API v1
+- **Install via npm**: run directly with `npx papierkram-mcp-server` — no clone needed
 - **Two transports**: stdio (for Claude Desktop, Cursor, Claude Code) and HTTP/SSE (for n8n, custom integrations)
 - **Docker ready** for easy self-hosted deployment
 - TypeScript with Zod schema validation on all parameters
@@ -38,7 +39,25 @@ An [MCP](https://modelcontextprotocol.io/) (Model Context Protocol) server for t
 
 Go to **Papierkram > Einstellungen > API** and create an API key.
 
-### Option A: Docker (recommended)
+### Option A: npm (recommended)
+
+No clone required — run directly with npx:
+
+```bash
+npx papierkram-mcp-server
+```
+
+Or install it globally:
+
+```bash
+npm install -g papierkram-mcp-server
+papierkram-mcp-server
+```
+
+The server talks stdio by default; set `PAPIERKRAM_API_KEY` and `PAPIERKRAM_SUBDOMAIN` in your
+environment or your MCP client config (see [Usage](#usage)).
+
+### Option B: Docker (self-hosted HTTP/SSE)
 
 ```bash
 git clone https://github.com/Wagner-Emden-IT-Services/papierkram-mcp-server.git
@@ -50,7 +69,7 @@ docker compose up -d
 
 The HTTP/SSE server will be available at `http://localhost:3001/sse`.
 
-### Option B: Node.js
+### Option C: Node.js from source
 
 ```bash
 git clone https://github.com/Wagner-Emden-IT-Services/papierkram-mcp-server.git
@@ -83,8 +102,8 @@ Add to your `claude_desktop_config.json`:
 {
   "mcpServers": {
     "papierkram": {
-      "command": "node",
-      "args": ["/absolute/path/to/papierkram-mcp-server/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "papierkram-mcp-server"],
       "env": {
         "PAPIERKRAM_API_KEY": "your-api-key",
         "PAPIERKRAM_SUBDOMAIN": "your-subdomain"
@@ -94,6 +113,8 @@ Add to your `claude_desktop_config.json`:
 }
 ```
 
+> Installed from source instead? Use `"command": "node"` with `"args": ["/absolute/path/to/papierkram-mcp-server/dist/index.js"]`.
+
 ### Claude Code (CLI)
 
 Add to your `~/.claude.json`:
@@ -102,8 +123,8 @@ Add to your `~/.claude.json`:
 {
   "mcpServers": {
     "papierkram": {
-      "command": "node",
-      "args": ["/absolute/path/to/papierkram-mcp-server/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "papierkram-mcp-server"],
       "env": {
         "PAPIERKRAM_API_KEY": "your-api-key",
         "PAPIERKRAM_SUBDOMAIN": "your-subdomain"

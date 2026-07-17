@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import startServer from "./server/server.js";
 
 async function main() {
