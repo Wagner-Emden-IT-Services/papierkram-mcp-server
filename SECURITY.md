@@ -11,7 +11,11 @@
 
 Falls du eine Sicherheitsluecke in diesem Projekt findest, melde sie bitte **nicht** ueber ein oeffentliches GitHub Issue.
 
-Stattdessen sende eine E-Mail an: **security@wagner-emden.de**
+Stattdessen nutze GitHubs privates Schwachstellen-Reporting:
+**[Security-Tab -> Report a vulnerability](https://github.com/Wagner-Emden-IT-Services/papierkram-mcp-server/security/advisories/new)**
+
+Falls das nicht moeglich ist: Kontaktformular auf <https://www.wagner-emden.com>
+mit Betreff `[SECURITY] papierkram-mcp-server`.
 
 Bitte beschreibe:
 
