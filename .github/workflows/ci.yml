@@ -16,10 +16,16 @@ jobs:
         node-version: [20, 22, 24]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+        with:
+          # Kein Step in diesem Job braucht authentifiziertes Git. Der Default
+          # (true) schreibt den GITHUB_TOKEN in die lokale Git-Config, wo ihn
+          # jeder im Job ausgefuehrte Dependency-Code lesen kann — npm ci zieht
+          # hier Fremdcode.
+          persist-credentials: false
 
       - name: Node.js ${{ matrix.node-version }} einrichten
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
