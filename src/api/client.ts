@@ -81,7 +81,15 @@ export class PapierkramClient {
       return undefined as T;
     }
 
-    return (await response.json()) as T;
+    // Some operations answer 2xx with an empty payload (e.g. POST .../deliver).
+    // response.json() would throw a bare SyntaxError on those, so read the text
+    // first and treat an empty body as "no content".
+    const text = await response.text();
+    if (text.trim() === "") {
+      return undefined as T;
+    }
+
+    return JSON.parse(text) as T;
   }
 
   // ---- Generic CRUD helpers ----

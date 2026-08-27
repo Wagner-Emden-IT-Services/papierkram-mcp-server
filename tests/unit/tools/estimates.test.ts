@@ -178,7 +178,7 @@ describe("Estimate Tools", () => {
 
   describe("send_estimate", () => {
     it("Sendet vollstaendiges email-Objekt (recipient/subject/body) bei send_via='email'", async () => {
-      mockClient.post.mockResolvedValue({ status: "delivered" });
+      mockClient.post.mockResolvedValue(undefined);
       const tool = server.getTool("send_estimate")!;
       await tool.execute({
         id: 400,
@@ -199,15 +199,41 @@ describe("Estimate Tools", () => {
     });
 
     it("Finalisiert ohne Mailversand bei send_via='pdf'", async () => {
-      mockClient.post.mockResolvedValue({ status: "delivered", estimate_no: "A-2026-0007" });
+      mockClient.post.mockResolvedValue(undefined);
       const tool = server.getTool("send_estimate")!;
-      const result = await tool.execute({ id: 400, send_via: "pdf" });
+      await tool.execute({ id: 400, send_via: "pdf" });
 
       expect(mockClient.post).toHaveBeenCalledWith("/income/estimates/400/deliver", {
         send_via: "pdf",
       });
-      const parsed = JSON.parse(result);
-      expect(parsed.estimate_no).toBe("A-2026-0007");
+    });
+
+    // Regression Issue #5, gleiche Ursache wie bei send_invoice.
+    it("Liefert bei leerer deliver-Antwort das zurueckgelesene Angebot statt zu werfen", async () => {
+      mockClient.post.mockResolvedValue(undefined);
+      mockClient.get.mockResolvedValue({
+        id: 400,
+        estimate_no: "A-2026-0007",
+        state: "sent",
+        sent_via: "pdf",
+      });
+      const tool = server.getTool("send_estimate")!;
+      const parsed = JSON.parse(await tool.execute({ id: 400, send_via: "pdf" }));
+
+      expect(mockClient.get).toHaveBeenCalledWith("/income/estimates/400");
+      expect(parsed.delivered).toBe(true);
+      expect(parsed.estimate.estimate_no).toBe("A-2026-0007");
+    });
+
+    it("Meldet Erfolg mit Warnung, wenn nur das Zuruecklesen scheitert", async () => {
+      mockClient.post.mockResolvedValue(undefined);
+      mockClient.get.mockRejectedValue(new Error("boom"));
+      const tool = server.getTool("send_estimate")!;
+      const parsed = JSON.parse(await tool.execute({ id: 400, send_via: "pdf" }));
+
+      expect(parsed.delivered).toBe(true);
+      expect(parsed.estimate_id).toBe(400);
+      expect(parsed.warning).toMatch(/get_estimate/);
     });
 
     it("Verweigert send_via='email' ohne recipient/subject/body", async () => {

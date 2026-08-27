@@ -325,7 +325,7 @@ describe("Rechnungs-Tools", () => {
   // ========== send_invoice ==========
   describe("send_invoice", () => {
     it("sendet vollstaendiges email-Objekt (recipient/subject/body) bei send_via='email'", async () => {
-      mockClient.post.mockResolvedValue({ id: 300, state: "sent" });
+      mockClient.post.mockResolvedValue(undefined);
       const tool = server.getTool("send_invoice")!;
       await tool.execute({
         id: 300,
@@ -345,14 +345,52 @@ describe("Rechnungs-Tools", () => {
     });
 
     it("finalisiert ohne Mailversand bei send_via='pdf' (Payload nur send_via)", async () => {
-      mockClient.post.mockResolvedValue({ id: 300, state: "open", invoice_no: "2026-0042" });
+      mockClient.post.mockResolvedValue(undefined);
       const tool = server.getTool("send_invoice")!;
-      const result = await tool.execute({ id: 300, send_via: "pdf" });
+      await tool.execute({ id: 300, send_via: "pdf" });
       expect(mockClient.post).toHaveBeenCalledWith("/income/invoices/300/deliver", {
         send_via: "pdf",
       });
-      const parsed = JSON.parse(result);
-      expect(parsed.invoice_no).toBe("2026-0042");
+    });
+
+    // Regression Issue #5: POST /deliver antwortet ohne Body. Frueher lief das undefined
+    // in toToolJson und warf einen TypeError - fuer eine bereits ausgefuehrte, nicht
+    // umkehrbare Aktion. Jetzt wird der Beleg zurueckgelesen und als Ergebnis geliefert.
+    it("liefert bei leerer deliver-Antwort den zurueckgelesenen Beleg statt zu werfen", async () => {
+      mockClient.post.mockResolvedValue(undefined);
+      mockClient.get.mockResolvedValue({
+        id: 300,
+        invoice_no: "RE-270826-1",
+        state: "unpaid",
+        sent_on: "2026-08-27T21:36:33.025+02:00",
+        sent_via: "email",
+        sent_to: "kunde@firma.de",
+      });
+      const tool = server.getTool("send_invoice")!;
+      const parsed = JSON.parse(
+        await tool.execute({
+          id: 300,
+          send_via: "email",
+          recipient: "kunde@firma.de",
+          subject: "Ihre Rechnung",
+          body: "Anbei die Rechnung.",
+        })
+      );
+      expect(mockClient.get).toHaveBeenCalledWith("/income/invoices/300");
+      expect(parsed.delivered).toBe(true);
+      expect(parsed.send_via).toBe("email");
+      expect(parsed.invoice.invoice_no).toBe("RE-270826-1");
+      expect(parsed.invoice.sent_to).toBe("kunde@firma.de");
+    });
+
+    it("meldet Erfolg mit Warnung, wenn nur das Zuruecklesen scheitert", async () => {
+      mockClient.post.mockResolvedValue(undefined);
+      mockClient.get.mockRejectedValue(new Error("boom"));
+      const tool = server.getTool("send_invoice")!;
+      const parsed = JSON.parse(await tool.execute({ id: 300, send_via: "pdf" }));
+      expect(parsed.delivered).toBe(true);
+      expect(parsed.invoice_id).toBe(300);
+      expect(parsed.warning).toMatch(/get_invoice/);
     });
 
     it("verweigert send_via='email' ohne recipient/subject/body (kein stiller Default-Mail-Versand)", async () => {

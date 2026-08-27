@@ -29,3 +29,19 @@ describe("toToolJson", () => {
     expect(parsed).toHaveProperty("preview");
   });
 });
+
+describe("toToolJson bei leerem Response-Body", () => {
+  it("wirft nicht bei undefined (204 No Content), sondern meldet Erfolg", () => {
+    // Regression Issue #5: JSON.stringify(undefined) ist undefined, nicht "undefined"
+    // -> der fruehere .length-Zugriff warf einen TypeError.
+    const out = toToolJson(undefined);
+    const parsed = JSON.parse(out);
+    expect(parsed.success).toBe(true);
+    expect(parsed.message).toMatch(/empty response body/i);
+  });
+
+  it("behandelt null wie einen leeren Body", () => {
+    const parsed = JSON.parse(toToolJson(null));
+    expect(parsed.success).toBe(true);
+  });
+});

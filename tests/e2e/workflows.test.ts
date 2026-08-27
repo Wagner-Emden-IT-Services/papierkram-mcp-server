@@ -226,8 +226,10 @@ describe("End-to-End Workflows", () => {
         ]),
       }));
 
-      // Schritt 2: Angebot per E-Mail versenden
-      mockClient.post.mockResolvedValue(sentEstimate);
+      // Schritt 2: Angebot per E-Mail versenden. deliver antwortet ohne Body,
+      // das Tool liest das Angebot danach zurueck (Issue #5).
+      mockClient.post.mockResolvedValue(undefined);
+      mockClient.get.mockResolvedValue(sentEstimate);
       const sendTool = server.getTool("send_estimate")!;
       const sendResult = await sendTool.execute({
         id: 410,
@@ -237,7 +239,8 @@ describe("End-to-End Workflows", () => {
         body: "Anbei unser Angebot.",
       });
       const sent = JSON.parse(sendResult);
-      expect(sent.state).toBe("sent");
+      expect(sent.delivered).toBe(true);
+      expect(sent.estimate.state).toBe("sent");
       expect(mockClient.post).toHaveBeenCalledWith("/income/estimates/410/deliver", {
         send_via: "email",
         email: {
