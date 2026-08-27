@@ -1,6 +1,6 @@
 {
   "name": "papierkram-mcp-server",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "MCP Server for the Papierkram.de accounting API",
   "author": "Wagner-Emden IT Services",
   "license": "MIT",

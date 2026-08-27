@@ -364,6 +364,21 @@ describe("PapierkramClient", () => {
   // =============================================
   // 11. 204 No Content
   // =============================================
+  describe("Leerer Response-Body", () => {
+    it("sollte undefined zurueckgeben, wenn ein 2xx ohne Body kommt (nicht 204)", async () => {
+      vi.spyOn(global, "fetch").mockResolvedValue({
+        ok: true,
+        status: 201,
+        statusText: "Created",
+        headers: new Headers(),
+        json: () => Promise.reject(new SyntaxError("Unexpected end of JSON input")),
+        text: () => Promise.resolve(""),
+      } as unknown as Response);
+
+      await expect(client.post("/income/invoices/1/deliver", {})).resolves.toBeUndefined();
+    });
+  });
+
   describe("204 No Content", () => {
     it("sollte undefined zurueckgeben bei Status 204", async () => {
       mockFetch(undefined, { status: 204, statusText: "No Content" });

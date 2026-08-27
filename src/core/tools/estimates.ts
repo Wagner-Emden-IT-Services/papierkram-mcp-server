@@ -136,7 +136,7 @@ export function registerEstimateTools(server: FastMCP) {
   server.addTool({
     name: "send_estimate",
     description:
-      "Deliver an estimate. With send_via='email' the estimate is mailed (recipient, subject and body are required). With send_via='pdf' the estimate is finalised without sending an email — the PDF can then be retrieved via download_estimate_pdf. Either way Papierkram assigns the final estimate number. Finalising is not reversible.",
+      "Deliver an estimate. With send_via='email' the estimate is mailed (recipient, subject and body are required). With send_via='pdf' the estimate is finalised without sending an email — the PDF can then be retrieved via download_estimate_pdf. Either way Papierkram assigns the final estimate number. Finalising is not reversible. Returns the finalised estimate read back from the API (estimate_no, sent_on, sent_via, sent_to).",
     annotations: { title: "Send/finalise estimate", ...SEND },
     parameters: z
       .object({
@@ -179,8 +179,23 @@ export function registerEstimateTools(server: FastMCP) {
         payload = { send_via: "email", email: { recipient, subject, body } };
       }
       const client = getClient();
-      const result = await client.post(`/income/estimates/${id}/deliver`, payload);
-      return toToolJson(result);
+      await client.post(`/income/estimates/${id}/deliver`, payload);
+
+      // See send_invoice: deliver answers without a payload, and finalising is not
+      // reversible — read the estimate back instead of reporting an empty response.
+      try {
+        const estimate = await client.get(`/income/estimates/${id}`);
+        return toToolJson({ delivered: true, send_via, estimate });
+      } catch (error) {
+        return toToolJson({
+          delivered: true,
+          send_via,
+          estimate_id: id,
+          warning:
+            `The estimate was delivered, but reading it back failed: ${error instanceof Error ? error.message : String(error)}. ` +
+            `Do not retry send_estimate — use get_estimate to check estimate_no and sent_on.`,
+        });
+      }
     },
   });
 

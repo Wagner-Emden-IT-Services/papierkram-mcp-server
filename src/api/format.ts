@@ -10,6 +10,21 @@
 export const CHARACTER_LIMIT = 25000;
 
 export function toToolJson(value: unknown): string {
+  // A 2xx response without a payload (204 No Content, or an endpoint that simply
+  // answers empty) arrives here as undefined/null. JSON.stringify(undefined) is
+  // the value undefined, not a string, so the length check below would throw for
+  // an operation that in fact succeeded.
+  if (value === undefined || value === null) {
+    return JSON.stringify(
+      {
+        success: true,
+        message: "The operation succeeded. The API returned an empty response body.",
+      },
+      null,
+      2
+    );
+  }
+
   const json = JSON.stringify(value, null, 2);
   if (json.length <= CHARACTER_LIMIT) return json;
 

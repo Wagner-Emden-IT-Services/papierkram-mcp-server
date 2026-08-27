@@ -226,7 +226,7 @@ export function registerInvoiceTools(server: FastMCP) {
   server.addTool({
     name: "send_invoice",
     description:
-      "Deliver an invoice. With send_via='email' the invoice is mailed (recipient, subject and body are required). With send_via='pdf' the invoice is finalised without sending an email — the PDF can then be retrieved via download_invoice_pdf. Either way Papierkram assigns the final invoice number. Finalising is not reversible.",
+      "Deliver an invoice. With send_via='email' the invoice is mailed (recipient, subject and body are required). With send_via='pdf' the invoice is finalised without sending an email — the PDF can then be retrieved via download_invoice_pdf. Either way Papierkram assigns the final invoice number. Finalising is not reversible. Returns the finalised invoice read back from the API (invoice_no, sent_on, sent_via, sent_to).",
     annotations: { title: "Send/finalise invoice", ...SEND },
     parameters: z
       .object({
@@ -269,8 +269,25 @@ export function registerInvoiceTools(server: FastMCP) {
         payload = { send_via: "email", email: { recipient, subject, body } };
       }
       const client = getClient();
-      const result = await client.post(`/income/invoices/${id}/deliver`, payload);
-      return toToolJson(result);
+      await client.post(`/income/invoices/${id}/deliver`, payload);
+
+      // The deliver endpoint answers without a payload, so read the invoice back —
+      // invoice_no / sent_on / sent_via / sent_to are the actual delivery outcome.
+      // Delivering is NOT reversible: a failed read-back must never be reported as a
+      // failed delivery, or the caller retries and finalises/mails a second time.
+      try {
+        const invoice = await client.get(`/income/invoices/${id}`);
+        return toToolJson({ delivered: true, send_via, invoice });
+      } catch (error) {
+        return toToolJson({
+          delivered: true,
+          send_via,
+          invoice_id: id,
+          warning:
+            `The invoice was delivered, but reading it back failed: ${error instanceof Error ? error.message : String(error)}. ` +
+            `Do not retry send_invoice — use get_invoice to check invoice_no and sent_on.`,
+        });
+      }
     },
   });
 

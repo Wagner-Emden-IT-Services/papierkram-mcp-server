@@ -5,6 +5,30 @@ Alle relevanten Aenderungen an diesem Projekt werden in dieser Datei dokumentier
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/)
 und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.0.4] - 2026-08-27
+
+### Behoben
+
+- **`send_invoice` / `send_estimate` meldeten einen Fehler, obwohl der Versand lief** (#5).
+  `POST /income/{invoices,estimates}/{id}/deliver` antwortet ohne Body. Das `undefined` lief in
+  `toToolJson`, wo `JSON.stringify(undefined)` eben **nicht** der String `"undefined"` ist →
+  `TypeError: Cannot read properties of undefined (reading 'length')`. Der Aufrufer sah damit
+  einen Fehler fuer eine bereits ausgefuehrte, **nicht umkehrbare** Aktion und konnte die
+  Rechnung ein zweites Mal finalisieren oder verschicken.
+  - `toToolJson` behandelt leere Antworten (`undefined`/`null`) jetzt als Erfolg statt zu
+    werfen — das deckt jeden kuenftigen Endpoint mit leerem Body ab, nicht nur diese zwei.
+  - Beide `send_*`-Tools lesen den Beleg nach dem Versand zurueck und liefern das
+    tatsaechliche Ergebnis (`invoice_no`/`estimate_no`, `sent_on`, `sent_via`, `sent_to`).
+    Schlaegt **nur** das Zuruecklesen fehl, bleibt das Ergebnis Erfolg mit Warnhinweis — nie
+    wieder ein Fehler fuer einen tatsaechlich erfolgten Versand.
+  - Der API-Client wertet zusaetzlich leere 2xx-Bodies jenseits von 204 als "kein Inhalt",
+    statt an `response.json()` zu scheitern.
+
+### Geaendert
+
+- **`AGENTS.md` ist die kanonische Agent-Anweisungsdatei** (Codex CLI liest sie nativ);
+  `CLAUDE.md` bindet sie per `@AGENTS.md` ein und enthaelt nur noch Claude-Code-Spezifisches.
+
 ## [2.0.3] - 2026-07-17
 
 ### Behoben
