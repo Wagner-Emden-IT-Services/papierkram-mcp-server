@@ -22,7 +22,7 @@ describe("Compact Transformers", () => {
       expect(result).toHaveProperty("id", 100);
       expect(result).toHaveProperty("name", "Testfirma GmbH");
       expect(result).toHaveProperty("contact_type", "customer");
-      expect(result).toHaveProperty("email", "info@testfirma.de");
+      expect(result).toHaveProperty("email", "info@testfirma.example.com");
     });
 
     it("inkludiert customer_no wenn vorhanden", () => {
@@ -62,7 +62,7 @@ describe("Compact Transformers", () => {
         id: 200,
         first_name: "Max",
         last_name: "Mustermann",
-        email: "max@testfirma.de",
+        email: "max@testfirma.example.com",
         position: "Geschaeftsfuehrer",
       });
     });
@@ -301,7 +301,7 @@ describe("Compact Transformers", () => {
     it("transformiert data Array", () => {
       const response = {
         data: [
-          { id: 100, name: "Testfirma GmbH", contact_type: "customer", email: "info@test.de", customer_no: "K-001", phone: "+49 123" },
+          { id: 100, name: "Testfirma GmbH", contact_type: "customer", email: "info@test.example.com", customer_no: "K-001", phone: "+49 123" },
         ],
         has_more: false,
         page: 1,

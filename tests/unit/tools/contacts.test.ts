@@ -53,7 +53,7 @@ describe("Kontakt-Tools", () => {
         id: 100,
         name: "Testfirma GmbH",
         contact_type: "customer",
-        email: "info@testfirma.de",
+        email: "info@testfirma.example.com",
         customer_no: "K-001",
       });
       // supplier_no ist null -> wird nicht aufgenommen
@@ -104,7 +104,7 @@ describe("Kontakt-Tools", () => {
 
   describe("create_company", () => {
     it("Sendet alle Parameter an client.create", async () => {
-      const newCompany = { contact_type: "customer" as const, name: "Neue GmbH", email: "info@neue.de" };
+      const newCompany = { contact_type: "customer" as const, name: "Neue GmbH", email: "info@neue.example.com" };
       mockClient.create.mockResolvedValue({ id: 102, ...newCompany });
 
       const tool = server.getTool("create_company")!;
@@ -142,13 +142,13 @@ describe("Kontakt-Tools", () => {
     });
 
     it("Sendet restliche Felder als Body", async () => {
-      mockClient.update.mockResolvedValue({ id: 100, email: "neu@test.de", phone: "+49 30 55555" });
+      mockClient.update.mockResolvedValue({ id: 100, email: "neu@test.example.com", phone: "+49 30 55555" });
 
       const tool = server.getTool("update_company")!;
-      await tool.execute({ id: 100, email: "neu@test.de", phone: "+49 30 55555" });
+      await tool.execute({ id: 100, email: "neu@test.example.com", phone: "+49 30 55555" });
 
       const callBody = mockClient.update.mock.calls[0][1];
-      expect(callBody).toEqual({ email: "neu@test.de", phone: "+49 30 55555" });
+      expect(callBody).toEqual({ email: "neu@test.example.com", phone: "+49 30 55555" });
       // id darf NICHT im Body sein
       expect(callBody).not.toHaveProperty("id");
     });
@@ -200,7 +200,7 @@ describe("Kontakt-Tools", () => {
         id: 200,
         first_name: "Max",
         last_name: "Mustermann",
-        email: "max@testfirma.de",
+        email: "max@testfirma.example.com",
         position: "Geschaeftsfuehrer",
       });
     });
@@ -241,7 +241,7 @@ describe("Kontakt-Tools", () => {
         company_id: 100,
         first_name: "Lisa",
         last_name: "Mueller",
-        email: "lisa@testfirma.de",
+        email: "lisa@testfirma.example.com",
         position: "Buchhaltung",
       };
       mockClient.create.mockResolvedValue({ id: 201, ...params });
@@ -254,7 +254,7 @@ describe("Kontakt-Tools", () => {
         {
           first_name: "Lisa",
           last_name: "Mueller",
-          email: "lisa@testfirma.de",
+          email: "lisa@testfirma.example.com",
           position: "Buchhaltung",
         }
       );
@@ -269,7 +269,7 @@ describe("Kontakt-Tools", () => {
         salutation: "Herr",
         phone: "+49 30 11111",
         mobile: "+49 170 22222",
-        email: "hans@testfirma.de",
+        email: "hans@testfirma.example.com",
       };
       mockClient.create.mockResolvedValue({ id: 202, ...params });
 
@@ -286,7 +286,7 @@ describe("Kontakt-Tools", () => {
       expect(callBody).toHaveProperty("salutation", "Herr");
       expect(callBody).toHaveProperty("phone", "+49 30 11111");
       expect(callBody).toHaveProperty("mobile", "+49 170 22222");
-      expect(callBody).toHaveProperty("email", "hans@testfirma.de");
+      expect(callBody).toHaveProperty("email", "hans@testfirma.example.com");
     });
   });
 
@@ -306,13 +306,13 @@ describe("Kontakt-Tools", () => {
     });
 
     it("Sendet nur geaenderte Felder", async () => {
-      mockClient.update.mockResolvedValue({ id: 200, email: "max.neu@testfirma.de" });
+      mockClient.update.mockResolvedValue({ id: 200, email: "max.neu@testfirma.example.com" });
 
       const tool = server.getTool("update_contact_person")!;
-      await tool.execute({ company_id: 100, id: 200, email: "max.neu@testfirma.de" });
+      await tool.execute({ company_id: 100, id: 200, email: "max.neu@testfirma.example.com" });
 
       const callBody = mockClient.update.mock.calls[0][1];
-      expect(callBody).toEqual({ email: "max.neu@testfirma.de" });
+      expect(callBody).toEqual({ email: "max.neu@testfirma.example.com" });
       // company_id und id duerfen NICHT im Body sein
       expect(callBody).not.toHaveProperty("company_id");
       expect(callBody).not.toHaveProperty("id");
@@ -364,9 +364,9 @@ describe("Kontakt-Tools", () => {
     it("filtert die zurueckgegebene Seite nach contact_type", async () => {
       mockClient.list.mockResolvedValue({
         entries: [
-          { id: 1, name: "Kunde A", contact_type: "customer", email: "a@x.de" },
-          { id: 2, name: "Lieferant B", contact_type: "supplier", email: "b@x.de" },
-          { id: 3, name: "Kunde C", contact_type: "customer", email: "c@x.de" },
+          { id: 1, name: "Kunde A", contact_type: "customer", email: "a@x.example.com" },
+          { id: 2, name: "Lieferant B", contact_type: "supplier", email: "b@x.example.com" },
+          { id: 3, name: "Kunde C", contact_type: "customer", email: "c@x.example.com" },
         ],
         has_more: false,
       });
