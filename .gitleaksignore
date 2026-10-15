@@ -1,0 +1,4 @@
+# Fictional test API key in the test suite (first commit), not a credential.
+55a537c356a209709b256d97987aa7a2a8b126ea:tests/setup.ts:generic-api-key:2
+55a537c356a209709b256d97987aa7a2a8b126ea:tests/unit/api/client.test.ts:generic-api-key:6
+55a537c356a209709b256d97987aa7a2a8b126ea:tests/unit/api/client.test.ts:generic-api-key:508
