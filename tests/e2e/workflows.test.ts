@@ -74,8 +74,8 @@ describe("End-to-End Workflows", () => {
 
   describe("Kunden-Workflow: create_company -> create_contact_person -> list_contact_persons", () => {
     it("Erstellt Firma mit Ansprechpartner und listet Kontakte", async () => {
-      const createdCompany = { id: 110, name: "Workflow GmbH", contact_type: "customer", email: "info@workflow.de" };
-      const createdPerson = { id: 210, first_name: "Anna", last_name: "Workflow", email: "anna@workflow.de", position: "CEO" };
+      const createdCompany = { id: 110, name: "Workflow GmbH", contact_type: "customer", email: "info@workflow.example.com" };
+      const createdPerson = { id: 210, first_name: "Anna", last_name: "Workflow", email: "anna@workflow.example.com", position: "CEO" };
       const personList = {
         entries: [createdPerson],
         has_more: false,
@@ -90,14 +90,14 @@ describe("End-to-End Workflows", () => {
       const companyResult = await createCompanyTool.execute({
         contact_type: "customer",
         name: "Workflow GmbH",
-        email: "info@workflow.de",
+        email: "info@workflow.example.com",
       });
       const company = JSON.parse(companyResult);
       expect(company.id).toBe(110);
       expect(mockClient.create).toHaveBeenCalledWith("/contact/companies", {
         contact_type: "customer",
         name: "Workflow GmbH",
-        email: "info@workflow.de",
+        email: "info@workflow.example.com",
       });
 
       // Schritt 2: Ansprechpartner erstellen
@@ -107,7 +107,7 @@ describe("End-to-End Workflows", () => {
         company_id: 110,
         first_name: "Anna",
         last_name: "Workflow",
-        email: "anna@workflow.de",
+        email: "anna@workflow.example.com",
         position: "CEO",
       });
       const person = JSON.parse(personResult);
@@ -115,7 +115,7 @@ describe("End-to-End Workflows", () => {
       expect(mockClient.create).toHaveBeenCalledWith("/contact/companies/110/persons", {
         first_name: "Anna",
         last_name: "Workflow",
-        email: "anna@workflow.de",
+        email: "anna@workflow.example.com",
         position: "CEO",
       });
 
@@ -234,7 +234,7 @@ describe("End-to-End Workflows", () => {
       const sendResult = await sendTool.execute({
         id: 410,
         send_via: "email",
-        recipient: "kunde@testfirma.de",
+        recipient: "kunde@testfirma.example.com",
         subject: "Unser Angebot {{angebot.angebotsnummer}}",
         body: "Anbei unser Angebot.",
       });
@@ -244,7 +244,7 @@ describe("End-to-End Workflows", () => {
       expect(mockClient.post).toHaveBeenCalledWith("/income/estimates/410/deliver", {
         send_via: "email",
         email: {
-          recipient: "kunde@testfirma.de",
+          recipient: "kunde@testfirma.example.com",
           subject: "Unser Angebot {{angebot.angebotsnummer}}",
           body: "Anbei unser Angebot.",
         },
@@ -350,7 +350,7 @@ describe("End-to-End Workflows", () => {
 
   describe("Komplett-Workflow: Kunde -> Projekt -> Rechnung mit Verknuepfungen", () => {
     it("Erstellt Kunde, Projekt und Rechnung und prueft alle Verknuepfungen", async () => {
-      const newCompany = { id: 120, name: "Komplett-Kunde GmbH", contact_type: "customer", email: "info@komplett.de", customer_no: "K-020" };
+      const newCompany = { id: 120, name: "Komplett-Kunde GmbH", contact_type: "customer", email: "info@komplett.example.com", customer_no: "K-020" };
       const newProject = { id: 620, name: "Komplett-Projekt", record_state: "active", company_id: 120 };
       const newInvoice = {
         id: 360, name: "Komplett-Rechnung", state: "draft", invoice_no: null,
@@ -364,7 +364,7 @@ describe("End-to-End Workflows", () => {
       const companyResult = await createCompanyTool.execute({
         contact_type: "customer",
         name: "Komplett-Kunde GmbH",
-        email: "info@komplett.de",
+        email: "info@komplett.example.com",
       });
       const company = JSON.parse(companyResult);
       expect(company.id).toBe(120);

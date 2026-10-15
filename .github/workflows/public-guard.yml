@@ -1,0 +1,121 @@
+# public-guard: keeps customer data out of this public repository.
+# Identical copy in every public repo of the organization. The marker list comes from the
+# organization secret WE_PUBLIC_GUARD_MARKERS; the log names locations only, never the matched text.
+# Push/PR: new commits. Weekly/manual: all refs incl. pull request refs, plus issue, PR and
+# release texts including their edit history.
+name: public-guard
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  public-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Scan
+        env:
+          MARKERS: ${{ secrets.WE_PUBLIC_GUARD_MARKERS }}
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          DEFAULT: ${{ github.event.repository.default_branch }}
+          ALLOW: '@(([a-z0-9-]+\.)*(example\.(com|org|net)|wagner-emden\.(com|de)|users\.noreply\.github\.com|github\.com|anthropic\.com)|[a-z0-9.-]+\.(example|invalid|test|localhost|local)|localhost)$|^no-?reply@'
+        run: |
+          set +e -uo pipefail
+          F=$RUNNER_TEMP/findings; : > "$F"
+          if [ -z "$MARKERS" ]; then
+            echo "::error::Secret WE_PUBLIC_GUARD_MARKERS missing (pull request from a fork?) - check locally."; exit 1
+          fi
+          printf '' | grep -P -e "$MARKERS"
+          if [ $? -gt 1 ]; then echo "::error::Secret WE_PUBLIC_GUARD_MARKERS is not a valid PCRE pattern."; exit 1; fi
+          # A failed scan is a finding (fail closed). A path that itself contains a marker is never printed.
+          failed() { [ "$1" -le 1 ] || echo "$2 failed (exit $1)" >> "$F"; }
+          loc() { if printf '%s' "$1" | grep -q -P -e "$MARKERS"; then echo "<file name with marker>:$2"; else echo "$1:$2"; fi; }
+          report() { while IFS=$'\t' read -r c p n; do echo "$1: $(loc "$p" "$n") (commit $c)"; done >> "$F"; }
+          case "$EVENT" in
+            pull_request) LOG="$BASE..$HEAD" ;;
+            push) if git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then LOG="$BEFORE..$HEAD"; else LOG="$HEAD --not origin/$DEFAULT"; fi ;;
+            *) git fetch -q origin '+refs/pull/*/head:refs/remotes/pull/*' || echo "pull request refs not fetched" >> "$F"
+               LOG="--all" ;;
+          esac
+          REVS=$( { echo "$HEAD"; git rev-list $LOG; } | sort -u )
+          MAILREVS=$REVS; [ "$LOG" = "--all" ] && MAILREVS=$HEAD
+
+          git grep -I -n -P -e "$MARKERS" $REVS -- \
+            | awk -F: '!s[$2 FS $3]++ {print substr($1,1,12) "\t" $2 "\t" $3}' > "$RUNNER_TEMP/hits"
+          failed "${PIPESTATUS[0]}" "content scan"
+          report "customer marker" < "$RUNNER_TEMP/hits"
+          git grep -I -n -o -P -e '[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}' $MAILREVS -- \
+            | awk -F: 'tolower($NF) !~ ENVIRON["ALLOW"] && !s[$2 FS $3]++ {print substr($1,1,12) "\t" $2 "\t" $3}' > "$RUNNER_TEMP/mails"
+          failed "${PIPESTATUS[0]}" "mail scan"
+          report "mail address outside allowlist" < "$RUNNER_TEMP/mails"
+          git log --format=%H --perl-regexp --grep="$MARKERS" $LOG | sed 's/^/customer marker in commit message: /' >> "$F"
+          failed "${PIPESTATUS[0]}" "commit message scan"
+          git log --format='>>> %H' --name-only $LOG | awk '/^>>> /{c=$2; next} NF {print c "\t" $0}' \
+            | grep -P -e "\t.*(?:$MARKERS)" | cut -f1 | sort -u | sed 's/^/customer marker in file name, commit /' >> "$F"
+          failed "$(( ${PIPESTATUS[0]} > ${PIPESTATUS[2]} ? ${PIPESTATUS[0]} : ${PIPESTATUS[2]} ))" "file name scan"
+          git for-each-ref --format='%(refname)' | grep -c -P -e "$MARKERS" | awk '$1 > 0 {print "customer marker in " $1 " ref names"}' >> "$F"
+          failed "${PIPESTATUS[1]}" "ref name scan"
+
+          GL=https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          curl -sSfL -o "$RUNNER_TEMP/gl.tgz" "$GL" \
+            && echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  $RUNNER_TEMP/gl.tgz" | sha256sum -c --quiet \
+            && tar -xzf "$RUNNER_TEMP/gl.tgz" -C "$RUNNER_TEMP" gitleaks \
+            && "$RUNNER_TEMP/gitleaks" git --no-banner --redact --log-opts="$LOG" --report-format json --report-path "$RUNNER_TEMP/gl.json" . > /dev/null 2>&1
+          if [ -s "$RUNNER_TEMP/gl.json" ]; then
+            jq -r '.[] | [.Commit[0:12], .File, (.StartLine | tostring)] | @tsv' "$RUNNER_TEMP/gl.json" | report "gitleaks finding"
+          else
+            echo "gitleaks did not run" >> "$F"
+          fi
+
+          if [ "$LOG" = "--all" ]; then
+            E='userContentEdits(first:30){nodes{diff}}'
+            C="comments(first:100){nodes{databaseId body $E}}"
+            RV="reviews(first:30){nodes{databaseId body $E comments(first:30){nodes{databaseId body userContentEdits(first:10){nodes{diff}}}}}}"
+            Q='query($o:String!,$r:String!,$endCursor:String){repository(owner:$o,name:$r){KIND(first:20,after:$endCursor){pageInfo{hasNextPage endCursor}nodes{number title body EXTRA timelineItems(first:50,itemTypes:[RENAMED_TITLE_EVENT]){nodes{...on RenamedTitleEvent{previousTitle}}}}}}}'
+            QI=${Q/KIND/issues}; QI=${QI/EXTRA/$E $C}
+            QP=${Q/KIND/pullRequests}; QP=${QP/EXTRA/headRefName $E $C $RV}
+            JQ='def t: (. // "") | gsub("\\s+"; " ");
+              def ed($l): (.userContentEdits.nodes // []) | to_entries[] | "\($l) revision \(.key + 1)\t\(.value.diff | t)";
+              .data.repository[].nodes[] | "#\(.number)" as $l |
+                "\($l) title/body\t\(.title | t) \(.body | t) \(.headRefName // "")", ed($l),
+                (.timelineItems.nodes[] | "\($l) old title\t\(.previousTitle | t)"),
+                (.comments.nodes[] | "\($l) comment \(.databaseId)" as $c | "\($c)\t\(.body | t)", ed($c)),
+                ((.reviews.nodes // [])[] | "\($l) review \(.databaseId)" as $v | "\($v)\t\(.body | t)", ed($v),
+                  (.comments.nodes[] | "\($l) review comment \(.databaseId)" as $c | "\($c)\t\(.body | t)", ed($c)))'
+            {
+              for q in "$QI" "$QP"; do
+                gh api graphql --paginate -f o="${GITHUB_REPOSITORY%/*}" -f r="${GITHUB_REPOSITORY#*/}" -f query="$q" --jq "$JQ" \
+                  || echo "issue/PR texts not fetched" >> "$F"
+              done
+              gh api --paginate "repos/$GITHUB_REPOSITORY/releases" --jq '.[] | "release \(.id)\t\(.name // "") \(.body // "" | gsub("\\s+"; " "))"' \
+                || echo "releases not fetched" >> "$F"
+              gh api --paginate "repos/$GITHUB_REPOSITORY/comments" --jq '.[] | "commit comment \(.id)\t\(.body // "" | gsub("\\s+"; " "))"' \
+                || echo "commit comments not fetched" >> "$F"
+            } | grep -P -e "\t.*(?:$MARKERS)" | cut -f1 | sort -u | sed 's/^/customer marker in /' >> "$F"
+            failed "${PIPESTATUS[1]}" "issue/PR text scan"
+          fi
+
+          if [ -s "$F" ]; then
+            while IFS= read -r l; do echo "::error::$l"; done < "$F"
+            echo "$(wc -l < "$F") findings. Inspect the content locally only."
+            exit 1
+          fi
+          echo "No findings."

@@ -183,7 +183,7 @@ describe("Estimate Tools", () => {
       await tool.execute({
         id: 400,
         send_via: "email",
-        recipient: "kunde@firma.de",
+        recipient: "kunde@firma.example.com",
         subject: "Unser Angebot",
         body: "Anbei das Angebot.",
       });
@@ -191,7 +191,7 @@ describe("Estimate Tools", () => {
       expect(mockClient.post).toHaveBeenCalledWith("/income/estimates/400/deliver", {
         send_via: "email",
         email: {
-          recipient: "kunde@firma.de",
+          recipient: "kunde@firma.example.com",
           subject: "Unser Angebot",
           body: "Anbei das Angebot.",
         },

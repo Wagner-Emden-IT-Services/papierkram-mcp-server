@@ -6,17 +6,17 @@ export const fixtures = {
     id: 100,
     name: "Testfirma GmbH",
     contact_type: "customer",
-    email: "info@testfirma.de",
+    email: "info@testfirma.example.com",
     customer_no: "K-001",
     supplier_no: null,
     phone: "+49 30 12345",
-    website: "https://testfirma.de",
+    website: "https://testfirma.example.com",
   },
 
   companyList: {
     entries: [
-      { id: 100, name: "Testfirma GmbH", contact_type: "customer", email: "info@testfirma.de", customer_no: "K-001", supplier_no: null },
-      { id: 101, name: "Lieferant AG", contact_type: "supplier", email: "kontakt@lieferant.de", customer_no: null, supplier_no: "L-001" },
+      { id: 100, name: "Testfirma GmbH", contact_type: "customer", email: "info@testfirma.example.com", customer_no: "K-001", supplier_no: null },
+      { id: 101, name: "Lieferant AG", contact_type: "supplier", email: "kontakt@lieferant.example.com", customer_no: null, supplier_no: "L-001" },
     ],
     has_more: false,
     page: 1,
@@ -29,14 +29,14 @@ export const fixtures = {
     id: 200,
     first_name: "Max",
     last_name: "Mustermann",
-    email: "max@testfirma.de",
+    email: "max@testfirma.example.com",
     position: "Geschaeftsfuehrer",
     phone: "+49 30 99999",
   },
 
   contactPersonList: {
     entries: [
-      { id: 200, first_name: "Max", last_name: "Mustermann", email: "max@testfirma.de", position: "Geschaeftsfuehrer" },
+      { id: 200, first_name: "Max", last_name: "Mustermann", email: "max@testfirma.example.com", position: "Geschaeftsfuehrer" },
     ],
     has_more: false,
     page: 1,

@@ -165,7 +165,7 @@ describe("Rechnungs-Tools", () => {
         billing_city: "Berlin",
         billing_country: "DE",
         billing_ust_idnr: "DE123456789",
-        billing_email: "rechnung@testfirma.de",
+        billing_email: "rechnung@testfirma.example.com",
         line_items: [{ name: "Pos", quantity: 1, price: 100, vat_rate: 0.19 }],
       });
       expect(mockClient.create).toHaveBeenCalledWith(
@@ -178,7 +178,7 @@ describe("Rechnungs-Tools", () => {
             city: "Berlin",
             country: "DE",
             ust_idnr: "DE123456789",
-            email: "rechnung@testfirma.de",
+            email: "rechnung@testfirma.example.com",
           },
         }),
       );
@@ -364,14 +364,14 @@ describe("Rechnungs-Tools", () => {
         state: "unpaid",
         sent_on: "2026-08-27T21:36:33.025+02:00",
         sent_via: "email",
-        sent_to: "kunde@firma.de",
+        sent_to: "kunde@firma.example.com",
       });
       const tool = server.getTool("send_invoice")!;
       const parsed = JSON.parse(
         await tool.execute({
           id: 300,
           send_via: "email",
-          recipient: "kunde@firma.de",
+          recipient: "kunde@firma.example.com",
           subject: "Ihre Rechnung",
           body: "Anbei die Rechnung.",
         })
@@ -380,7 +380,7 @@ describe("Rechnungs-Tools", () => {
       expect(parsed.delivered).toBe(true);
       expect(parsed.send_via).toBe("email");
       expect(parsed.invoice.invoice_no).toBe("RE-270826-1");
-      expect(parsed.invoice.sent_to).toBe("kunde@firma.de");
+      expect(parsed.invoice.sent_to).toBe("kunde@firma.example.com");
     });
 
     it("meldet Erfolg mit Warnung, wenn nur das Zuruecklesen scheitert", async () => {
