@@ -5,6 +5,17 @@ import { compactList, compactProject } from "../../api/transformers.js";
 import { toToolJson } from "../../api/format.js";
 import { READ_ONLY, CREATE, UPDATE, DESTRUCTIVE, ARCHIVE, idParam, listParams, compactParam } from "./_shared.js";
 
+const teamMembersParam = z
+  .array(z.object({ id: idParam.describe("User ID") }).strict())
+  .optional()
+  .describe("Project team as [{id}] (see list_users). Pass the complete intended team; omit the field when not changing it.");
+
+const defaultPropositionParam = z
+  .object({ id: idParam.describe("Proposition ID") })
+  .strict()
+  .optional()
+  .describe("Default proposition of the project as {id} (see list_propositions)");
+
 export function registerProjectTools(server: FastMCP) {
   server.addTool({
     name: "list_projects",
@@ -56,6 +67,8 @@ export function registerProjectTools(server: FastMCP) {
         budget_money: z.number().optional().describe("Money budget"),
         budget_time: z.number().optional().describe("Time budget"),
         budget_time_unit: z.string().optional().describe("Time budget unit (e.g. 'minutes', 'hours')"),
+        team_members: teamMembersParam,
+        default_proposition: defaultPropositionParam,
       })
       .strict(),
     execute: async (params) => {
@@ -87,6 +100,8 @@ export function registerProjectTools(server: FastMCP) {
         budget_time: z.number().optional().describe("Time budget"),
         budget_time_unit: z.string().optional().describe("Time budget unit"),
         customer_id: idParam.optional().describe("Customer (company) ID"),
+        team_members: teamMembersParam,
+        default_proposition: defaultPropositionParam,
       })
       .strict(),
     execute: async (params) => {

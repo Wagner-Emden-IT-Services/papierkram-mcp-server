@@ -32,7 +32,8 @@ src/
 │   │   ├── banking.ts          # Bank connections & transactions
 │   │   ├── projects.ts         # Projects
 │   │   ├── tracker.ts          # Time entries & tasks
-│   │   └── info.ts             # Account info
+│   │   ├── users.ts            # Users (read-only)
+│   │   └── info.ts             # Account info, payment terms, propositions
 │   ├── resources.ts            # MCP resource templates
 │   └── prompts.ts              # MCP prompt templates
 ├── api/

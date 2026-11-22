@@ -5,6 +5,13 @@ import { compactList, compactTimeEntry, compactTask } from "../../api/transforme
 import { toToolJson } from "../../api/format.js";
 import { READ_ONLY, CREATE, UPDATE, DESTRUCTIVE, idParam, listParams, compactParam } from "./_shared.js";
 
+const billableDurationParam = z
+  .number()
+  .int()
+  .min(0)
+  .optional()
+  .describe("Billable duration in seconds, like duration (e.g. 5400 for 1.5 hours)");
+
 export function registerTrackerTools(server: FastMCP) {
   // ---- Time Entries ----
 
@@ -61,6 +68,7 @@ export function registerTrackerTools(server: FastMCP) {
         user_id: idParam.describe("User ID (required, use 1 for account owner)"),
         comments: z.string().optional().describe("Description of work done"),
         unbillable: z.boolean().optional().describe("Mark as not billable"),
+        billable_duration: billableDurationParam,
       })
       .strict(),
     execute: async (params) => {
@@ -84,6 +92,7 @@ export function registerTrackerTools(server: FastMCP) {
         ended_at_time: z.string().optional().describe("End time (HH:MM, e.g. '10:30')"),
         comments: z.string().optional().describe("Description of work done"),
         unbillable: z.boolean().optional().describe("Mark as not billable"),
+        billable_duration: billableDurationParam,
         task_id: idParam.optional().describe("Associated task ID"),
         user_id: idParam.optional().describe("User ID"),
       })

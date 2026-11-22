@@ -7,6 +7,7 @@ import { registerBankingTools } from "./banking.js";
 import { registerProjectTools } from "./projects.js";
 import { registerTrackerTools } from "./tracker.js";
 import { registerInfoTools } from "./info.js";
+import { registerUserTools } from "./users.js";
 
 export function registerTools(server: FastMCP) {
   registerContactTools(server);
@@ -17,4 +18,5 @@ export function registerTools(server: FastMCP) {
   registerProjectTools(server);
   registerTrackerTools(server);
   registerInfoTools(server);
+  registerUserTools(server);
 }

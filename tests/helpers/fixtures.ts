@@ -133,6 +133,11 @@ export const fixtures = {
     end_date: "2025-06-30",
     company_id: 100,
     description: "Komplettes Redesign der Firmenwebseite",
+    default_proposition: { type: "proposition", id: 50, name: "Webentwicklung", article_no: "AN-00050" },
+    team_members: [
+      { type: "user", id: 1, full_name: "Max Mustermann" },
+      { type: "user", id: 2, full_name: "Erika Musterfrau" },
+    ],
   },
 
   projectList: {
@@ -152,6 +157,8 @@ export const fixtures = {
     started_at: "2025-01-15T09:00:00+01:00",
     ended_at: "2025-01-15T11:30:00+01:00",
     duration: 9000,
+    billable_duration: 9000,
+    unbillable: false,
     comments: "Frontend-Entwicklung",
     task_id: 800,
     project_id: 600,
@@ -255,12 +262,78 @@ export const fixtures = {
     total_entries: 2,
   },
 
+  // Einzelformat laut Swagger-Beispiel zu GET /income/propositions/{id} (synthetische Werte).
   proposition: {
+    type: "proposition",
     id: 50,
     name: "Webentwicklung",
-    price: 120.0,
-    unit: "Stunde",
-    vat_rate: "19%",
+    article_no: "AN-00050",
+    proposition_type: "service",
     description: "Frontend- und Backend-Entwicklung",
+    price: "120.0",
+    time_unit: "hour",
+    unit_name_1: "Stunde",
+    unit_name_n: "Stunden",
+    record_state: "active",
+    flagged: null,
+    favorite: null,
+    created_at: "2025-01-15T09:00:00.000+01:00",
+    updated_at: "2025-01-15T09:00:00.000+01:00",
+    vat_rate: {
+      type: "vat_rate",
+      id: 1,
+      name: "19%",
+      rate: "0.19",
+      description: "Regelsteuersatz",
+      code: "AR19P",
+      country_code: "de",
+      vat_rate_type: "ar",
+      created_at: "2025-01-01T00:00:00.000+01:00",
+      updated_at: "2025-01-01T00:00:00.000+01:00",
+    },
+  },
+
+  // ---- Users ----
+  // Format laut Swagger-Beispielen zu GET /users und GET /users/{id} (synthetische Werte).
+  user: {
+    type: "user",
+    id: 1,
+    full_name: "Max Mustermann",
+    first_name: "Max",
+    last_name: "Mustermann",
+    role: "owner",
+    role_f: "Accountinhaber",
+    email: "max@testfirma.example.com",
+  },
+
+  userList: {
+    type: "list",
+    page: 1,
+    page_size: 25,
+    total_pages: 1,
+    total_entries: 2,
+    has_more: false,
+    entries: [
+      {
+        type: "user",
+        id: 1,
+        full_name: "Max Mustermann",
+        first_name: "Max",
+        last_name: "Mustermann",
+        role: "owner",
+        role_f: "Accountinhaber",
+        email: "max@testfirma.example.com",
+      },
+      {
+        type: "user",
+        id: 2,
+        full_name: "Erika Musterfrau",
+        first_name: "Erika",
+        last_name: "Musterfrau",
+        role: "tracker",
+        role_f: "Zeiterfasser",
+        email: "erika@testfirma.example.com",
+      },
+    ],
   },
 };

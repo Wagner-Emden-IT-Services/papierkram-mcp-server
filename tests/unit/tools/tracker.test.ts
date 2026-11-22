@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { z } from "zod";
 import { createMockClient, type MockClient } from "../../helpers/mock-client.js";
 import { createMockServer, type MockServer } from "../../helpers/mock-server.js";
 import { fixtures } from "../../helpers/fixtures.js";
@@ -217,6 +218,43 @@ describe("Tracker Tools", () => {
       const body = mockClient.update.mock.calls[0][1] as Record<string, unknown>;
       expect(body).not.toHaveProperty("task");
       expect(body).not.toHaveProperty("user");
+    });
+  });
+
+  // ---- billable_duration ----
+  describe("billable_duration", () => {
+    const base = { entry_date: "2025-01-15", started_at_time: "09:00", ended_at_time: "11:30", task_id: 800, user_id: 1 };
+    const run = (name: string, args: Record<string, unknown>) => {
+      const tool = server.getTool(name)!;
+      return tool.execute((tool.parameters as z.ZodTypeAny).parse(args));
+    };
+
+    it.each([5400, 0])("create_time_entry sendet %i", async (seconds) => {
+      await run("create_time_entry", { ...base, billable_duration: seconds });
+
+      expect((mockClient.create.mock.calls[0][1] as Record<string, unknown>).billable_duration).toBe(seconds);
+    });
+
+    it.each([5400, 0])("update_time_entry sendet %i", async (seconds) => {
+      await run("update_time_entry", { id: 700, billable_duration: seconds });
+
+      expect(mockClient.update).toHaveBeenCalledWith("/tracker/time_entries/700", { billable_duration: seconds });
+    });
+
+    it("sendet das Feld nicht, wenn es fehlt", async () => {
+      await run("create_time_entry", base);
+      await run("update_time_entry", { id: 700, comments: "Nur Kommentar" });
+
+      for (const call of [mockClient.create.mock.calls[0], mockClient.update.mock.calls[0]]) {
+        expect(Object.keys(call[1] as object)).not.toContain("billable_duration");
+      }
+    });
+
+    it.each([1.5, -60, "3600"])("lehnt %s ab (API verlangt ganze Zahl)", (bad) => {
+      for (const [name, args] of [["create_time_entry", base], ["update_time_entry", { id: 700 }]] as const) {
+        const schema = server.getTool(name)!.parameters as z.ZodTypeAny;
+        expect(schema.safeParse({ ...args, billable_duration: bad }).success).toBe(false);
+      }
     });
   });
 

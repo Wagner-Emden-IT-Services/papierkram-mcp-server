@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { z } from "zod";
 import { createMockClient, type MockClient } from "../../helpers/mock-client.js";
 import { createMockServer, type MockServer } from "../../helpers/mock-server.js";
 import { fixtures } from "../../helpers/fixtures.js";
@@ -137,6 +138,75 @@ describe("Project Tools", () => {
       const body = mockClient.update.mock.calls[0][1] as Record<string, unknown>;
       expect(body.budget_money).toBe("2500");
       expect(body.budget_time).toBe("12");
+    });
+  });
+
+  // ---- team_members / default_proposition ----
+  describe("team_members und default_proposition", () => {
+    const run = (name: string, args: Record<string, unknown>) => {
+      const tool = server.getTool(name)!;
+      return tool.execute((tool.parameters as z.ZodTypeAny).parse(args));
+    };
+
+    it("create_project sendet beide Felder im API-Format", async () => {
+      mockClient.create.mockResolvedValue(fixtures.project);
+      const fields = { team_members: [{ id: 1 }, { id: 2 }], default_proposition: { id: 50 } };
+
+      const result = JSON.parse(await run("create_project", { name: "Team", customer_id: 100, ...fields }));
+
+      expect(mockClient.create).toHaveBeenCalledWith("/projects", { name: "Team", customer: { id: 100 }, ...fields });
+      expect(result.team_members).toEqual(fixtures.project.team_members);
+    });
+
+    it("create_project ohne die Felder sendet sie nicht", async () => {
+      await run("create_project", { name: "Ohne Team", customer_id: 100 });
+
+      const body = mockClient.create.mock.calls[0][1] as Record<string, unknown>;
+      expect(Object.keys(body).sort()).toEqual(["customer", "name"]);
+    });
+
+    it("update_project sendet beide Felder im API-Format", async () => {
+      const fields = { team_members: [{ id: 2 }], default_proposition: { id: 51 } };
+
+      await run("update_project", { id: 600, ...fields });
+
+      expect(mockClient.update).toHaveBeenCalledWith("/projects/600", fields);
+    });
+
+    it.each([
+      { name: "Umbenannt" },
+      { customer_id: 101 },
+      { budget_money: 2500 },
+      { default_proposition: { id: 50 } },
+    ])("update_project ohne team_members sendet das Feld nicht: %o", async (change) => {
+      await run("update_project", { id: 600, ...change });
+
+      // Schluessel pruefen: auch team_members: undefined, null oder [] waeren hier falsch
+      const body = mockClient.update.mock.calls[0][1] as Record<string, unknown>;
+      expect(Object.keys(body)).not.toContain("team_members");
+    });
+
+    it("update_project sendet eine ausdruecklich leere Liste", async () => {
+      await run("update_project", { id: 600, team_members: [] });
+
+      expect(mockClient.update).toHaveBeenCalledWith("/projects/600", { team_members: [] });
+    });
+
+    it.each([
+      { team_members: [1, 2] },
+      { team_members: [{ id: 0 }] },
+      { team_members: [{ id: 1, full_name: "Max Mustermann" }] },
+      { team_members: null },
+      { default_proposition: 50 },
+      { default_proposition: { id: 50, name: "Webentwicklung" } },
+    ])("lehnt falsche Formen ab: %o", (bad) => {
+      for (const [name, base] of [
+        ["create_project", { name: "P", customer_id: 100 }],
+        ["update_project", { id: 600 }],
+      ] as const) {
+        const schema = server.getTool(name)!.parameters as z.ZodTypeAny;
+        expect(schema.safeParse({ ...base, ...bad }).success).toBe(false);
+      }
     });
   });
 

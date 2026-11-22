@@ -5,6 +5,20 @@ Alle relevanten Aenderungen an diesem Projekt werden in dieser Datei dokumentier
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/)
 und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [Unreleased]
+
+### Hinzugefuegt
+
+- **Artikel (Waren/Dienstleistungen) verwalten:** `create_proposition`, `update_proposition`,
+  `delete_proposition`, `archive_proposition`, `unarchive_proposition`. Anders als bei
+  Belegpositionen erwartet die API `vat_rate` hier als Namen des Steuersatzes (z.B. `"19%"`),
+  nicht als `0.19`. `price` wird als String gesendet.
+- **Benutzer lesen:** `list_users`, `get_user`.
+- **`create_project` / `update_project`:** neue Felder `team_members` (Liste von `{id}`) und
+  `default_proposition` (`{id}`). Fehlt `team_members` beim Update, wird das Feld nicht gesendet.
+- **`create_time_entry` / `update_time_entry`:** neues Feld `billable_duration` in Sekunden.
+- Damit 63 statt 56 Tools.
+
 ## [2.0.4] - 2026-08-27
 
 ### Behoben
