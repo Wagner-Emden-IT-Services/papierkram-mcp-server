@@ -5,7 +5,7 @@ Alle relevanten Aenderungen an diesem Projekt werden in dieser Datei dokumentier
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/)
 und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
-## [Unreleased]
+## [2.1.0] - 2026-11-22
 
 ### Hinzugefuegt
 
@@ -15,8 +15,11 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
   nicht als `0.19`. `price` wird als String gesendet.
 - **Benutzer lesen:** `list_users`, `get_user`.
 - **`create_project` / `update_project`:** neue Felder `team_members` (Liste von `{id}`) und
-  `default_proposition` (`{id}`). Fehlt `team_members` beim Update, wird das Feld nicht gesendet.
-- **`create_time_entry` / `update_time_entry`:** neues Feld `billable_duration` in Sekunden.
+  `default_proposition` (`{id}`). Fehlt `team_members` beim Update, wird das Feld nicht gesendet;
+  das Team bleibt dann erhalten.
+- **`create_time_entry` / `update_time_entry`:** neues Feld `billable_duration` (ganze Zahl).
+  Die Einheit ist in der API-Dokumentation nicht angegeben; ihr Beispiel spricht fuer Sekunden wie bei
+  `duration`, belegt ist das nicht. Bei nicht abrechenbaren Eintraegen speichert die API 0.
 - Damit 63 statt 56 Tools.
 
 ### Geaendert

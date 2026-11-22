@@ -10,7 +10,9 @@ const billableDurationParam = z
   .int()
   .min(0)
   .optional()
-  .describe("Billable duration in seconds, like duration (e.g. 5400 for 1.5 hours)");
+  .describe(
+    "Billable duration as an integer. The API does not document the unit; its example suggests seconds, like duration (e.g. 5400 for 1.5 hours). For non-billable entries the API stores 0.",
+  );
 
 export function registerTrackerTools(server: FastMCP) {
   // ---- Time Entries ----
