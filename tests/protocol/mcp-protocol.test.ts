@@ -38,8 +38,8 @@ describe("MCP-Protokoll Registrierung", () => {
 
   // ---- Tools ----
 
-  it("Registriert alle 56 Tools", () => {
-    expect(server.tools).toHaveLength(56);
+  it("Registriert alle 63 Tools", () => {
+    expect(server.tools).toHaveLength(63);
   });
 
   it("Alle Tool-Namen folgen der verb_noun Konvention", () => {
@@ -82,6 +82,14 @@ describe("MCP-Protokoll Registrierung", () => {
     // send_invoice finalisiert -> nicht read-only, destruktiv
     expect(get("send_invoice").readOnlyHint).toBe(false);
     expect(get("send_invoice").destructiveHint).toBe(true);
+    expect(get("list_users").readOnlyHint).toBe(true);
+    expect(get("get_user").readOnlyHint).toBe(true);
+    expect(get("delete_proposition").destructiveHint).toBe(true);
+    for (const name of ["create_proposition", "update_proposition", "archive_proposition", "unarchive_proposition"]) {
+      expect(get(name).readOnlyHint, name).toBe(false);
+      expect(get(name).destructiveHint, name).toBe(false);
+    }
+    expect(get("create_proposition").idempotentHint).toBe(false);
   });
 
   it("Bestimmte erwartete Tool-Namen existieren (Stichprobe)", () => {
@@ -105,6 +113,10 @@ describe("MCP-Protokoll Registrierung", () => {
       "list_tasks", "get_task", "create_task",
       // Info
       "get_account_info", "list_payment_terms", "list_propositions", "get_proposition",
+      // Propositions
+      "create_proposition", "update_proposition", "delete_proposition", "archive_proposition", "unarchive_proposition",
+      // Users
+      "list_users", "get_user",
     ];
 
     const registeredNames = new Set(server.tools.map((t) => t.name));

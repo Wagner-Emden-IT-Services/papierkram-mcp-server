@@ -28,8 +28,9 @@ export function registerContactTools(server: FastMCP) {
         data = { ...result, entries: (result.entries as Array<Record<string, unknown>>).filter((e) => e.contact_type === contact_type) };
       }
 
-      if (compact === false) return toToolJson(data);
-      return toToolJson(compactList(data, compactCompany));
+      // Unindented JSON (indent 0): this list is large and called often.
+      if (compact === false) return toToolJson(data, 0);
+      return toToolJson(compactList(data, compactCompany), 0);
     },
   });
 

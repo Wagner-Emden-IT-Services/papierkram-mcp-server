@@ -66,6 +66,20 @@ export function compactBankConnection(item: AnyRecord): AnyRecord {
   return pick(item, ["id", "name"]);
 }
 
+export function compactProposition(item: AnyRecord): AnyRecord {
+  return pick(item, [
+    "id",
+    "name",
+    "article_no",
+    "proposition_type",
+    "price",
+    "time_unit",
+    "unit_name_1",
+    "unit_name_n",
+    "record_state",
+  ]);
+}
+
 export function compactBankTransaction(item: AnyRecord): AnyRecord {
   const from = item.from as AnyRecord | undefined;
   return {

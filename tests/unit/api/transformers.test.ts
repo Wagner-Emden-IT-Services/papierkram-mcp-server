@@ -9,6 +9,7 @@ import {
   compactTimeEntry,
   compactTask,
   compactBankConnection,
+  compactProposition,
   compactBankTransaction,
   compactList,
 } from "../../../src/api/transformers.js";
@@ -253,6 +254,31 @@ describe("Compact Transformers", () => {
       expect(result).toEqual({ id: 902, name: "Konto X" });
       expect(result).not.toHaveProperty("iban");
       expect(result).not.toHaveProperty("bic");
+    });
+  });
+
+  // ---- compactProposition ----
+  describe("compactProposition", () => {
+    it("extrahiert genau die Listenfelder", () => {
+      const result = compactProposition(fixtures.propositionList.entries[0]);
+      expect(result).toEqual({
+        id: 50,
+        name: "Webentwicklung",
+        article_no: "AN-00050",
+        proposition_type: "service",
+        price: "120.0",
+        time_unit: "hour",
+        unit_name_1: "Stunde",
+        unit_name_n: "Stunden",
+        record_state: "active",
+      });
+    });
+
+    it("laesst Beschreibung, Typ, Merker und Zeitstempel weg", () => {
+      const result = compactProposition(fixtures.propositionList.entries[0]);
+      for (const dropped of ["type", "description", "flagged", "favorite", "created_at", "updated_at"]) {
+        expect(result).not.toHaveProperty(dropped);
+      }
     });
   });
 

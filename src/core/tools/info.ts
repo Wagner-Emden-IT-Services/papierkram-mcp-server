@@ -1,8 +1,9 @@
 import { FastMCP } from "fastmcp";
 import { z } from "zod";
 import { getClient } from "../../api/client.js";
+import { compactList, compactProposition } from "../../api/transformers.js";
 import { toToolJson } from "../../api/format.js";
-import { READ_ONLY, idParam, listParams } from "./_shared.js";
+import { READ_ONLY, CREATE, UPDATE, DESTRUCTIVE, ARCHIVE, idParam, listParams } from "./_shared.js";
 
 export function registerInfoTools(server: FastMCP) {
   server.addTool({
@@ -36,15 +37,25 @@ export function registerInfoTools(server: FastMCP) {
   server.addTool({
     name: "list_propositions",
     description:
-      "List propositions (Waren/Dienstleistungen — products and services) that can be referenced in invoices and estimates.",
+      "List propositions (Waren/Dienstleistungen — products and services) that can be referenced in invoices and estimates. Returns the full API response by default; set compact=true for compact summaries (id, name, article_no, proposition_type, price, time_unit, unit names, record_state).",
     annotations: { title: "List products/services", ...READ_ONLY },
     parameters: z.object({
       ...listParams,
+      // Opt-in, unlike the shared compactParam: callers rely on the full response of this list.
+      compact: z
+        .boolean()
+        .optional()
+        .default(false)
+        .describe("Return compact summaries (default: false, i.e. the full API response)."),
     }),
     execute: async (params) => {
+      const { compact, ...query } = params;
       const client = getClient();
-      const result = await client.list("/income/propositions", params as Record<string, string | number | boolean | undefined>);
-      return toToolJson(result);
+      const result = await client.list("/income/propositions", query as Record<string, string | number | boolean | undefined>);
+
+      // Unindented JSON (indent 0): this list is large and called often.
+      if (compact !== true) return toToolJson(result, 0);
+      return toToolJson(compactList(result as Record<string, unknown>, compactProposition), 0);
     },
   });
 
@@ -58,6 +69,105 @@ export function registerInfoTools(server: FastMCP) {
     execute: async (params) => {
       const client = getClient();
       const result = await client.get(`/income/propositions/${params.id}`);
+      return toToolJson(result);
+    },
+  });
+
+  server.addTool({
+    name: "create_proposition",
+    description:
+      "Create a proposition (Ware/Dienstleistung — product/service). Requires name, article_no, proposition_type, time_unit and vat_rate. Returns the created proposition with its new ID.",
+    annotations: { title: "Create product/service", ...CREATE },
+    parameters: z
+      .object({
+        name: z.string().min(1).describe("Proposition name"),
+        article_no: z.string().min(1).describe("Article number"),
+        proposition_type: z.enum(["service", "product"]).describe("Type: service or product"),
+        time_unit: z.enum(["hour", "day"]).describe("Time unit (required for products too)"),
+        vat_rate: z.string().min(1).describe("VAT rate name, e.g. '19%' (not a fraction like 0.19, unlike line items)"),
+        price: z.number().optional().describe("Unit price"),
+        description: z.string().optional().describe("Proposition description"),
+        unit_name_1: z.string().optional().describe("Unit name, singular (e.g. 'Stunde')"),
+        unit_name_n: z.string().optional().describe("Unit name, plural (e.g. 'Stunden')"),
+      })
+      .strict(),
+    execute: async (params) => {
+      const { price, ...rest } = params;
+      const body: Record<string, unknown> = { ...rest };
+      // Papierkram expects price as a string, and vat_rate as the rate's name (no normalizeVatRate here).
+      if (price !== undefined) body.price = String(price);
+      const client = getClient();
+      const result = await client.create("/income/propositions", body);
+      return toToolJson(result);
+    },
+  });
+
+  server.addTool({
+    name: "update_proposition",
+    description: "Update an existing proposition (partial). Only provided fields are changed.",
+    annotations: { title: "Update product/service", ...UPDATE },
+    parameters: z
+      .object({
+        id: idParam.describe("Proposition ID"),
+        name: z.string().min(1).optional().describe("Proposition name"),
+        article_no: z.string().min(1).optional().describe("Article number"),
+        proposition_type: z.enum(["service", "product"]).optional().describe("Type: service or product"),
+        time_unit: z.enum(["hour", "day"]).optional().describe("Time unit"),
+        vat_rate: z.string().min(1).optional().describe("VAT rate name, e.g. '19%' (not a fraction like 0.19)"),
+        price: z.number().optional().describe("Unit price"),
+        description: z.string().optional().describe("Proposition description"),
+        unit_name_1: z.string().optional().describe("Unit name, singular"),
+        unit_name_n: z.string().optional().describe("Unit name, plural"),
+      })
+      .strict(),
+    execute: async (params) => {
+      const { id, price, ...rest } = params;
+      const body: Record<string, unknown> = { ...rest };
+      if (price !== undefined) body.price = String(price);
+      const client = getClient();
+      const result = await client.update(`/income/propositions/${id}`, body);
+      return toToolJson(result);
+    },
+  });
+
+  server.addTool({
+    name: "delete_proposition",
+    description: "Permanently delete a proposition. Returns a confirmation string.",
+    annotations: { title: "Delete product/service", ...DESTRUCTIVE },
+    parameters: z.object({
+      id: idParam.describe("Proposition ID"),
+    }),
+    execute: async (params) => {
+      const client = getClient();
+      await client.delete(`/income/propositions/${params.id}`);
+      return `Proposition ${params.id} deleted successfully.`;
+    },
+  });
+
+  server.addTool({
+    name: "archive_proposition",
+    description: "Archive a proposition. Reversible via unarchive_proposition.",
+    annotations: { title: "Archive product/service", ...ARCHIVE },
+    parameters: z.object({
+      id: idParam.describe("Proposition ID to archive"),
+    }),
+    execute: async (params) => {
+      const client = getClient();
+      const result = await client.post(`/income/propositions/${params.id}/archive`);
+      return toToolJson(result);
+    },
+  });
+
+  server.addTool({
+    name: "unarchive_proposition",
+    description: "Unarchive a proposition (restore from archive). Reversible via archive_proposition.",
+    annotations: { title: "Unarchive product/service", ...ARCHIVE },
+    parameters: z.object({
+      id: idParam.describe("Proposition ID"),
+    }),
+    execute: async (params) => {
+      const client = getClient();
+      const result = await client.post(`/income/propositions/${params.id}/unarchive`);
       return toToolJson(result);
     },
   });

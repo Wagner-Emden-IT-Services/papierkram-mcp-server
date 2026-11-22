@@ -73,6 +73,19 @@ describe("Kontakt-Tools", () => {
       // Volle Antwort = identisch mit Fixture
       expect(parsed).toEqual(fixtures.companyList);
     });
+
+    it("Gibt JSON ohne Einrueckung aus, parsebar und inhaltsgleich (beide compact-Stellungen)", async () => {
+      mockClient.list.mockResolvedValue(fixtures.companyList);
+      const tool = server.getTool("list_companies")!;
+
+      const full = await tool.execute({ page_size: 25, compact: false });
+      expect(full).toBe(JSON.stringify(fixtures.companyList));
+
+      const compact = await tool.execute({ page_size: 25, compact: true });
+      expect(compact).not.toMatch(/\n/);
+      expect(compact).toBe(JSON.stringify(JSON.parse(compact)));
+      expect(JSON.parse(compact).entries).toHaveLength(2);
+    });
   });
 
   // ---- get_company ----
