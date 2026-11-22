@@ -1,6 +1,7 @@
 import { FastMCP } from "fastmcp";
 import { z } from "zod";
 import { getClient } from "../../api/client.js";
+import { compactList, compactProposition } from "../../api/transformers.js";
 import { toToolJson } from "../../api/format.js";
 import { READ_ONLY, CREATE, UPDATE, DESTRUCTIVE, ARCHIVE, idParam, listParams } from "./_shared.js";
 
@@ -36,15 +37,25 @@ export function registerInfoTools(server: FastMCP) {
   server.addTool({
     name: "list_propositions",
     description:
-      "List propositions (Waren/Dienstleistungen — products and services) that can be referenced in invoices and estimates.",
+      "List propositions (Waren/Dienstleistungen — products and services) that can be referenced in invoices and estimates. Returns the full API response by default; set compact=true for compact summaries (id, name, article_no, proposition_type, price, time_unit, unit names, record_state).",
     annotations: { title: "List products/services", ...READ_ONLY },
     parameters: z.object({
       ...listParams,
+      // Opt-in, unlike the shared compactParam: callers rely on the full response of this list.
+      compact: z
+        .boolean()
+        .optional()
+        .default(false)
+        .describe("Return compact summaries (default: false, i.e. the full API response)."),
     }),
     execute: async (params) => {
+      const { compact, ...query } = params;
       const client = getClient();
-      const result = await client.list("/income/propositions", params as Record<string, string | number | boolean | undefined>);
-      return toToolJson(result);
+      const result = await client.list("/income/propositions", query as Record<string, string | number | boolean | undefined>);
+
+      // Unindented JSON (indent 0): this list is large and called often.
+      if (compact !== true) return toToolJson(result, 0);
+      return toToolJson(compactList(result as Record<string, unknown>, compactProposition), 0);
     },
   });
 

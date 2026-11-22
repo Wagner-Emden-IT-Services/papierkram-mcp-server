@@ -6,10 +6,14 @@
  * every JSON tool result is routed through `toToolJson`, which truncates
  * oversized list responses (halving entries until they fit) and otherwise
  * returns a bounded notice. Normal-sized responses are returned unchanged.
+ *
+ * `indent` is the JSON.stringify indentation (default 2). High-volume list
+ * tools pass 0 for unindented JSON; the limit is always measured on the string
+ * that is actually returned.
  */
 export const CHARACTER_LIMIT = 25000;
 
-export function toToolJson(value: unknown): string {
+export function toToolJson(value: unknown, indent = 2): string {
   // A 2xx response without a payload (204 No Content, or an endpoint that simply
   // answers empty) arrives here as undefined/null. JSON.stringify(undefined) is
   // the value undefined, not a string, so the length check below would throw for
@@ -21,11 +25,11 @@ export function toToolJson(value: unknown): string {
         message: "The operation succeeded. The API returned an empty response body.",
       },
       null,
-      2
+      indent
     );
   }
 
-  const json = JSON.stringify(value, null, 2);
+  const json = JSON.stringify(value, null, indent);
   if (json.length <= CHARACTER_LIMIT) return json;
 
   // Oversized list response: keep halving the entries until it fits.
@@ -49,7 +53,7 @@ export function toToolJson(value: unknown): string {
             `Response truncated from ${items.length} to ${keep} items (exceeded ${CHARACTER_LIMIT} characters). ` +
             `Narrow the result with page_size, filters, or pagination.`,
         };
-        const serialized = JSON.stringify(candidate, null, 2);
+        const serialized = JSON.stringify(candidate, null, indent);
         if (serialized.length <= CHARACTER_LIMIT) return serialized;
       }
     }
@@ -65,6 +69,6 @@ export function toToolJson(value: unknown): string {
       preview: json.slice(0, CHARACTER_LIMIT),
     },
     null,
-    2
+    indent
   );
 }

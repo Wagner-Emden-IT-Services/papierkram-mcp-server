@@ -19,6 +19,19 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 - **`create_time_entry` / `update_time_entry`:** neues Feld `billable_duration` in Sekunden.
 - Damit 63 statt 56 Tools.
 
+### Geaendert
+
+- **`list_propositions` kann kompakte Eintraege liefern.** Neuer Parameter `compact`, anders als
+  bei den uebrigen `list_*`-Tools mit Standard `false`: Ohne Angabe bleibt es bei der
+  vollstaendigen API-Antwort. `compact: true` liefert je Eintrag nur `id`, `name`, `article_no`,
+  `proposition_type`, `price`, `time_unit`, `unit_name_1`, `unit_name_n` und `record_state`.
+- **`list_companies` und `list_propositions` geben JSON ohne Einrueckung aus** (in beiden
+  `compact`-Stellungen). Das weicht fuer genau diese zwei Listen von der Konvention in
+  `AGENTS.md` ab (`JSON.stringify(result, null, 2)`); alle uebrigen Tools bleiben eingerueckt.
+  Der Inhalt ist nach `JSON.parse` unveraendert. `CHARACTER_LIMIT` (25.000 Zeichen) bleibt und
+  wird weiter am ausgegebenen String gemessen: Ohne Einrueckung greift die Kuerzung spaeter,
+  dieselbe `page_size` kann deshalb mehr Eintraege liefern als bisher.
+
 ## [2.0.4] - 2026-08-27
 
 ### Behoben
